@@ -26,20 +26,18 @@ translated voice into OBS / Discord / Zoom as a virtual microphone.
   alignment, line height, per-bubble padding + radius, panel background color and
   opacity, max visible sentences, anchored or free-drag positioning, resize grips.
 - **System tray** — minimize-to-tray, quick input-device switch, start / stop capture,
-  lock / unlock overlay, quit. Context menu rebuilds on every open so it always
-  reflects live state.
-- **Debug console** — toggleable tab that logs every DeepL REST + WebSocket frame for
-  troubleshooting. Audio chunks are opt-in (they come ~8× / second).
+  lock / unlock overlay, quit.
+- **Debug console** — toggleable log of every DeepL REST + WebSocket frame for
+  troubleshooting (see below).
 - **Settings persist** across sessions in `%AppData%\VoiceBuddy\settings.json`.
-  Including overlay position, size, and free-drag coordinates per monitor.
 
 ---
 
 ## Requirements
 
 - Windows 10 version 1809+ or Windows 11.
-- A DeepL API key — the free tier (`api-free.deepl.com`) works.
-  [Get one here](https://www.deepl.com/pro-api).
+- A **DeepL API Pro** subscription — DeepL Voice is not currently available on the
+  Free tier. [Sign up here](https://www.deepl.com/pro-api).
 - .NET 10 SDK — only required to build from source. Prebuilt single-file releases
   bundle the runtime.
 - *Optional:* [VB-CABLE](https://vb-audio.com/Cable/) if you want to use the
@@ -50,9 +48,9 @@ translated voice into OBS / Discord / Zoom as a virtual microphone.
 ## Quick start
 
 1. Download the latest release (or build from source — see below), run `VoiceBuddy.exe`.
-2. Go to the **Settings** tab. Paste your DeepL API key. Set target language as a
-   BCP 47 tag (`EN-US`, `DE`, `FR-CA`, …). Leave source language as `auto` unless you
-   have a reason to pin it.
+2. Go to the **Settings** tab. Paste your DeepL API **Pro** key. Set target language
+   as a BCP 47 tag (`EN-US`, `DE`, `FR-CA`, …). Leave source language as `auto` unless
+   you have a reason to pin it.
 3. Go to the **Overview** tab. Pick an audio source from the **Device** dropdown
    (loopback devices are prefixed with a speaker icon, microphones with a mic icon).
 4. Click **Start capture**. Talk or play audio through the chosen source.
@@ -61,8 +59,7 @@ translated voice into OBS / Discord / Zoom as a virtual microphone.
 ### Enabling translated voice output
 
 1. On the **Overview** tab, check **Voice — stream translated audio**.
-2. Pick an output device. *Default output device* uses whatever Windows currently has
-   set; pick a specific device to route the translated voice there.
+2. Pick an output device.
 3. Optionally pick a voice (female / male / auto). The voice availability depends on
    the target language.
 4. Start capture. The translated voice streams out of the selected device alongside
@@ -97,133 +94,31 @@ dotnet publish src/VoiceBuddy.App -c Release
 
 Output lands in
 `src/VoiceBuddy.App/bin/Release/net10.0-windows/win-x64/publish/VoiceBuddy.exe`.
-The resulting exe is ~70 MB (includes the .NET runtime and NAudio native libs), runs
-on any Windows 10 1809+ machine with no prerequisites.
 
-Hot reload works during development:
+Hot reload during development:
 
 ```bash
 dotnet watch --project src/VoiceBuddy.App
 ```
 
-Most XAML / style / resource edits apply live; constructor or new-named-element
-changes trigger a rude-edit prompt and a restart.
-
 ---
 
-## Walkthrough of the UI
+## Debug console
 
-### Header
-A brand mark, app title, and a live session chip on the right that turns green when
-DeepL Voice is connected, red on error, muted when idle.
-
-### Overview tab
-Where the running controls live.
-
-- **Audio source** — device picker, VU meter, captured-format readout, refresh,
-  start / stop.
-- **Translation output** — independent **Captions** and **Voice** toggles. Turning
-  voice on reveals an output-device picker and voice (male / female / auto) selector,
-  plus a hint on how to set up OBS / Discord routing with VB-CABLE.
-- **DeepL Voice session** status line.
-- **Fire test subtitle** — pushes a fake German → English pair into the overlay for
-  styling tuning without burning session quota.
-
-### Settings tab
-DeepL credentials (target lang, source lang, host, API key) and subtitle behavior
-toggles (`Show original text under subtitle`).
-
-### Layout tab
-All subtitle styling — font family, size, weight, alignment, line height, text color,
-outline color + width, background color + opacity, padding X / Y, border radius, max
-lines per bubble, **max visible sentences**, plus the overall **Panel background**
-color + opacity (fills the entire overlay area behind the bubbles; set opacity > 0 if
-you want a solid caption bar across the screen).
-
-Preview surface renders a sample subtitle that updates live as you adjust the style.
-
-Position controls: anchor (9 positions), offset X/Y, width, height. **Mode** readout
-tells you whether the overlay is Anchored or Free; drag the overlay itself to flip to
-Free; Reset to anchor puts it back.
-
-### Debug tab
-Toggle `Log API traffic` to start capturing. Shows a monospace console with every REST
-+ WebSocket frame in and out of DeepL:
+A dedicated **Debug** tab logs every DeepL REST + WebSocket frame for troubleshooting.
+Sample output:
 
 ```
 14:38:05.097  →  POST https://api.deepl.com/v3/voice/realtime  {"source_media_content_type":…}
 14:38:05.471  ←  HTTP 200  {"streaming_url":"wss://…","token":"…","session_id":"…"}
 14:38:05.472  →  ws connect  wss://api.deepl.com/v3/voice/realtime/connect
 14:38:05.814  ←  ws open  api.deepl.com
-14:38:07.096  ←  ws  {"source_transcript_update":{"concluded":[],"tentative":[{"text":" are","language":"en",…}]}}
+14:38:07.096  ←  ws  {"source_transcript_update":{"concluded":[],"tentative":[{"text":" are",…}]}}
 ```
 
-Audio chunks (source_media_chunk, ~8× / second) are gated behind a separate checkbox
-because they'd drown out everything else. Log is capped at 1000 entries and auto-scrolls.
-
-### System tray
-Minimize the main window and it disappears to the tray instead of sitting in the taskbar.
-Right-click the tray icon for:
-
-- Show VoiceBuddy (opens the main window)
-- Start / Stop capture
-- Input source submenu (every available device, current one checked)
-- Lock overlay (click-through)
-- Unlock & reposition overlay (unlocks + shows a balloon hint)
-- Quit
-
-Double-click (or left-click when hidden) reopens the main window.
-
----
-
-## The overlay window
-
-A transparent, borderless, always-on-top window. Two states:
-
-- **Unlocked** — you can drag it anywhere on any monitor, resize with the edge or
-  corner grips, and click the in-overlay **Lock** button in the top-right to flip back
-  to locked. Drag / resize positions and dimensions persist.
-- **Locked** — click-through (mouse events pass to whatever's underneath). Ideal for
-  gaming, streaming, or any focused task.
-
-Each incoming DeepL target utterance lives in one "bubble" — a rounded rectangle with
-your configured styling. While DeepL is still streaming tentative words, the same
-bubble updates in place with dimmer text. When DeepL finalizes the utterance, the
-bubble switches to full brightness and a new dim pending bubble spawns below for the
-next utterance. When the stack exceeds `Visible sentences`, the oldest box at the top
-drops off.
-
-With **Show original text** on, each bubble also shows the source text underneath at
-62% size. Source and target are paired by index (usually 1:1 in DeepL Voice; when they
-drift you may see slight misalignment).
-
-Idle-fade: after 8 seconds with no updates, the overlay fades out and clears state, so
-stale text doesn't linger.
-
----
-
-## Architecture
-
-```
-WASAPI capture ──▶ AudioCaptureService ──▶ Resampler (→ 16 kHz mono) ──▶ DeepLVoiceService
-                                                                             │
-                        ┌─── source_transcript_update  ──▶ SubtitleBus ──▶ OverlayWindow
-                        ├─── target_transcript_update  ──▶ SubtitleBus ──▶ OverlayWindow
-                        └─── target_media_chunk        ──▶ VoiceOutPlayer ──▶ WasapiOut
-```
-
-Single-process WPF + NAudio. No sidecar processes, no IPC, no external services other
-than DeepL's WebSocket. Components communicate through in-process events and a
-`SubtitleBus` pub/sub for transcript snapshots.
-
-### Transcript model
-
-`TranscriptSnapshot { Lang, Concluded[], Tentative[] }` — the DeepL server sends
-concluded segments as deltas (accumulated by the service) and tentative segments as
-full replacements. The overlay maintains a bookmark per side; when tentative empties
-and unfinalized concluded text exists, that span becomes a finalized sentence and the
-bookmark advances. This lets the overlay show "the current utterance in progress"
-(pending box) separately from completed utterances (concluded boxes).
+Log is off by default (zero cost when disabled), capped at 1000 entries, auto-scrolls.
+Audio chunks (`source_media_chunk`, ~8× / second) are gated behind a separate checkbox
+because they would drown out everything else.
 
 ---
 
@@ -278,6 +173,9 @@ loads it as the header logo + taskbar icon on next launch.
 
 ## Known limitations
 
+- **DeepL Pro required.** DeepL Voice is not available on the Free tier at this time.
+  The Free host option remains in the UI dropdown for future compatibility, but
+  sessions against `api-free.deepl.com` will fail today.
 - **30-second DeepL inactivity timeout.** If no audio arrives for 30 seconds the
   server closes the session. VoiceBuddy catches the close cleanly and surfaces
   `DeepL Voice disconnected:` in the status chip — just hit Start capture again to
@@ -287,8 +185,7 @@ loads it as the header logo + taskbar icon on next launch.
 - **Unsigned binaries.** Windows SmartScreen warns on first run ("More info → Run
   anyway"). An EV code-signing cert is the fix but costs money and paperwork.
 - **No shipped virtual audio driver.** Virtual-mic routing relies on the user
-  installing VB-CABLE (or BlackHole equivalents on other OSes — but there's no other
-  OS anyway).
+  installing VB-CABLE (or an equivalent).
 - **Source / target sentence alignment** when *Show original text* is on uses
   index-pairing, which is usually 1:1 but can drift if DeepL merges or splits segments
   differently between source and target.
