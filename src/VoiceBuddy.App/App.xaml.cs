@@ -11,6 +11,7 @@ public partial class App : Application
     public static FakeSubtitleFeed FakeFeed { get; private set; } = null!;
     public static AudioCaptureService Audio { get; private set; } = null!;
     public static DeepLVoiceService Voice { get; private set; } = null!;
+    public static VoiceOutPlayer VoiceOut { get; private set; } = null!;
     public static TrayService Tray { get; private set; } = null!;
     public static DebugLog Debug { get; private set; } = null!;
 
@@ -26,11 +27,14 @@ public partial class App : Application
         Debug = new DebugLog();
         Audio = new AudioCaptureService();
         Voice = new DeepLVoiceService(Debug);
+        VoiceOut = new VoiceOutPlayer();
 
         // Capture → DeepL Voice (transcribe + translate in one session) → publish snapshots.
         Audio.FrameAvailable += (_, frame) => Voice.AddFrame(frame);
         Voice.SourceUpdated += (_, snap) => Subtitles.PublishSource(snap);
         Voice.TargetUpdated += (_, snap) => Subtitles.PublishTarget(snap);
+        // Translated voice bytes stream straight into the output player's ring buffer.
+        Voice.TargetMediaChunk += (_, pcm) => VoiceOut.AddPcmChunk(pcm);
 
         var main = new MainWindow();
         MainWindow = main;
@@ -45,6 +49,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         Tray?.Dispose();
+        VoiceOut?.Dispose();
         Voice?.Dispose();
         Audio?.Dispose();
         _overlay?.Close();
@@ -66,15 +71,23 @@ public partial class App : Application
         Audio.Start(cfg.DeviceId, cfg.DeviceKind);
 
         var t = Settings.Current.Translation;
-        if (!string.IsNullOrWhiteSpace(t.DeepLApiKey))
-        {
-            await Voice.StartAsync(t.DeepLApiHost, t.DeepLApiKey, t.SourceLang, t.TargetLang);
-        }
+        if (string.IsNullOrWhiteSpace(t.DeepLApiKey)) return;
+
+        // No session at all if both output modes are disabled — we'd be paying for a
+        // transcript stream nobody reads.
+        if (!t.CaptionsEnabled && !t.VoiceOutEnabled) return;
+
+        if (t.VoiceOutEnabled)
+            VoiceOut.Start(t.VoiceOutDeviceId);
+
+        await Voice.StartAsync(t.DeepLApiHost, t.DeepLApiKey, t.SourceLang, t.TargetLang,
+            wantVoiceOut: t.VoiceOutEnabled, voiceGender: t.VoiceGender);
     }
 
     public static void StopCapture()
     {
         Audio.Stop();
         Voice.Stop();
+        VoiceOut.Stop();
     }
 }

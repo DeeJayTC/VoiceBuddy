@@ -86,9 +86,37 @@
               </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="DeepL Voice">
+            <GroupBox Header="Translation output">
               <StackPanel>
-                <StackPanel Style="{StaticResource Row}">
+                <CheckBox x:Name="CaptionsEnabledCheck" Content="Captions — show translated text in the on-screen overlay"
+                          Margin="0,2,0,6"
+                          Checked="CaptionsEnabledCheck_Changed" Unchecked="CaptionsEnabledCheck_Changed" />
+                <CheckBox x:Name="VoiceEnabledCheck" Content="Voice — stream translated audio"
+                          Margin="0,2,0,6"
+                          Checked="VoiceEnabledCheck_Changed" Unchecked="VoiceEnabledCheck_Changed" />
+                <Grid x:Name="VoiceOutConfig" Visibility="Collapsed" Margin="24,4,0,0">
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <StackPanel Grid.Row="0" Style="{StaticResource Row}">
+                    <Label Style="{StaticResource RowLabel}" Content="Output device" />
+                    <ComboBox x:Name="VoiceOutDeviceBox" Width="320" SelectionChanged="VoiceOutDeviceBox_SelectionChanged" />
+                    <Button Content="Refresh" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="RefreshVoiceOutDevicesButton_Click" />
+                  </StackPanel>
+                  <StackPanel Grid.Row="1" Style="{StaticResource Row}">
+                    <Label Style="{StaticResource RowLabel}" Content="Voice" />
+                    <ComboBox x:Name="VoiceGenderBox" Width="220" SelectionChanged="VoiceGenderBox_SelectionChanged">
+                      <ComboBoxItem Content="Auto (language default)" Tag="" />
+                      <ComboBoxItem Content="female" Tag="female" />
+                      <ComboBoxItem Content="male" Tag="male" />
+                    </ComboBox>
+                  </StackPanel>
+                  <TextBlock Grid.Row="2" Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
+                             Text="For OBS / Discord: install VB-CABLE (vb-audio.com/Cable), pick 'CABLE Input' as output here, then set OBS/Discord mic to 'CABLE Output'." />
+                </Grid>
+                <StackPanel Style="{StaticResource Row}" Margin="0,8,0,0">
                   <Label Style="{StaticResource RowLabel}" Content="Session" />
                   <TextBlock x:Name="VoiceStatus" Foreground="{StaticResource Muted}" Text="Idle" VerticalAlignment="Center" />
                 </StackPanel>

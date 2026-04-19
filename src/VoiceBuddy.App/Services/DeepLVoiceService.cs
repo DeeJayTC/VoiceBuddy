@@ -27,6 +27,7 @@ public sealed class DeepLVoiceService : IDisposable
     public bool IsRunning => _ws?.State == WebSocketState.Open;
 
     public event EventHandler<string>? StatusChanged;
+    public event EventHandler<byte[]>? TargetMediaChunk;
 
     private readonly DebugLog _debug;
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(15) };
@@ -59,7 +60,14 @@ public sealed class DeepLVoiceService : IDisposable
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
     };
 
-    public async Task<bool> StartAsync(string host, string apiKey, string sourceLang, string targetLang, CancellationToken ct = default)
+    public async Task<bool> StartAsync(
+        string host,
+        string apiKey,
+        string sourceLang,
+        string targetLang,
+        bool wantVoiceOut,
+        string voiceGender,
+        CancellationToken ct = default)
     {
         // Always run a full cleanup first. IsRunning only reflects the WebSocket state;
         // a previous session that the server dropped (e.g. 30 s inactivity) leaves the
@@ -81,7 +89,8 @@ public sealed class DeepLVoiceService : IDisposable
         SessionInfo session;
         try
         {
-            session = await RequestSessionAsync(host, apiKey, sourceLang, targetLang, ct);
+            session = await RequestSessionAsync(host, apiKey, sourceLang, targetLang,
+                wantVoiceOut, voiceGender, ct);
         }
         catch (Exception ex)
         {
@@ -193,7 +202,8 @@ public sealed class DeepLVoiceService : IDisposable
     private sealed record SessionInfo(string StreamingUrl, string Token, string SessionId);
 
     private async Task<SessionInfo> RequestSessionAsync(
-        string host, string apiKey, string sourceLang, string targetLang, CancellationToken ct)
+        string host, string apiKey, string sourceLang, string targetLang,
+        bool wantVoiceOut, string voiceGender, CancellationToken ct)
     {
         var url = $"https://{host}/v3/voice/realtime";
         var auto = sourceLang.Equals("auto", StringComparison.OrdinalIgnoreCase);
@@ -204,6 +214,12 @@ public sealed class DeepLVoiceService : IDisposable
             SourceLanguage: auto ? null : sourceLang.ToLowerInvariant(),
             SourceLanguageMode: auto ? "auto" : "fixed",
             TargetLanguages: new[] { targetLang },
+            // When voice output is on we ask for 16 kHz mono PCM back too — same format
+            // we feed in, so the output side can play it through WasapiOut with no decoder.
+            // target_media_languages implicitly adds to target_languages per the docs.
+            TargetMediaLanguages: wantVoiceOut ? new[] { targetLang } : null,
+            TargetMediaContentType: wantVoiceOut ? "audio/pcm;encoding=s16le;rate=16000" : null,
+            TargetMediaVoice: wantVoiceOut && !string.IsNullOrEmpty(voiceGender) ? voiceGender : null,
             MessageFormat: "json");
 
         var payloadJson = JsonSerializer.Serialize(payload, JsonOptions);
@@ -232,6 +248,9 @@ public sealed class DeepLVoiceService : IDisposable
         string? SourceLanguage,
         string SourceLanguageMode,
         string[] TargetLanguages,
+        string[]? TargetMediaLanguages,
+        string? TargetMediaContentType,
+        string? TargetMediaVoice,
         string MessageFormat);
 
     // ---------- WebSocket send loop ----------
@@ -327,6 +346,12 @@ public sealed class DeepLVoiceService : IDisposable
                 return;
             }
 
+            if (root.TryGetProperty("target_media_chunk", out var media))
+            {
+                HandleTargetMediaChunk(media);
+                return;
+            }
+
             if (root.TryGetProperty("error", out var err))
             {
                 var msg = err.TryGetProperty("error_message", out var mEl) ? mEl.GetString() : "(no message)";
@@ -378,6 +403,46 @@ public sealed class DeepLVoiceService : IDisposable
 
         if (isSource) SourceUpdated?.Invoke(this, snapshot);
         else TargetUpdated?.Invoke(this, snapshot);
+    }
+
+    /// <summary>
+    /// Parses a target_media_chunk event. The <c>data</c> array holds base64 chunks; the
+    /// first message for a language also carries decoder-init "headers" chunks at the
+    /// start of the array — those only matter for containerized formats (webm, ogg…).
+    /// We request raw PCM so every chunk is audio; concatenate them and forward.
+    /// </summary>
+    private void HandleTargetMediaChunk(JsonElement body)
+    {
+        if (!body.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array) return;
+        var headers = body.TryGetProperty("headers", out var hEl) && hEl.ValueKind == JsonValueKind.Number ? hEl.GetInt32() : 0;
+
+        var total = 0;
+        var decoded = new List<byte[]>(data.GetArrayLength());
+        var idx = 0;
+        foreach (var entry in data.EnumerateArray())
+        {
+            // Skip decoder init packets — PCM has no headers anyway, but be defensive.
+            if (idx++ < headers) continue;
+            var s = entry.GetString();
+            if (string.IsNullOrEmpty(s)) continue;
+            try
+            {
+                var bytes = Convert.FromBase64String(s);
+                decoded.Add(bytes);
+                total += bytes.Length;
+            }
+            catch { /* malformed chunk — drop */ }
+        }
+        if (total == 0) return;
+
+        var combined = new byte[total];
+        var off = 0;
+        foreach (var b in decoded)
+        {
+            Buffer.BlockCopy(b, 0, combined, off, b.Length);
+            off += b.Length;
+        }
+        TargetMediaChunk?.Invoke(this, combined);
     }
 
     private static bool TryParseSegment(JsonElement seg, out TranscriptSegment parsed)

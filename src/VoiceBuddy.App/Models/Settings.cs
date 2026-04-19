@@ -99,11 +99,21 @@ public sealed class TranslationConfig : INotifyPropertyChanged
     private string _targetLang = "EN-US";
     private string _deepLApiKey = "";
     private string _deepLApiHost = "api-free.deepl.com";
+    private bool _captionsEnabled = true;
+    private bool _voiceOutEnabled;
+    private string? _voiceOutDeviceId;
+    // Empty = let DeepL pick the default voice for the target language.
+    // "male" / "female" override it.
+    private string _voiceGender = "";
 
     public string SourceLang { get => _sourceLang; set => Set(ref _sourceLang, value); }
     public string TargetLang { get => _targetLang; set => Set(ref _targetLang, value); }
     public string DeepLApiKey { get => _deepLApiKey; set => Set(ref _deepLApiKey, value); }
     public string DeepLApiHost { get => _deepLApiHost; set => Set(ref _deepLApiHost, value); }
+    public bool CaptionsEnabled { get => _captionsEnabled; set => Set(ref _captionsEnabled, value); }
+    public bool VoiceOutEnabled { get => _voiceOutEnabled; set => Set(ref _voiceOutEnabled, value); }
+    public string? VoiceOutDeviceId { get => _voiceOutDeviceId; set => Set(ref _voiceOutDeviceId, value); }
+    public string VoiceGender { get => _voiceGender; set => Set(ref _voiceGender, value); }
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Set<T>(ref T field, T value, [CallerMemberName] string? name = null)

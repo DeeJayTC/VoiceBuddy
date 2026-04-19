@@ -33,6 +33,7 @@ public partial class MainWindow : Window
         Loaded += (_, __) =>
         {
             RefreshDevices();
+            RefreshVoiceOutDevices();
             BindFromSettings();
             TryLoadLogo();
             AutoStartIfConfigured();
@@ -133,6 +134,12 @@ public partial class MainWindow : Window
             SelectComboByContent(HostBox, s.Translation.DeepLApiHost);
             ApiKeyBox.Password = s.Translation.DeepLApiKey;
             ShowOriginalCheck.IsChecked = s.ShowOriginalText;
+
+            CaptionsEnabledCheck.IsChecked = s.Translation.CaptionsEnabled;
+            VoiceEnabledCheck.IsChecked = s.Translation.VoiceOutEnabled;
+            VoiceOutConfig.Visibility = s.Translation.VoiceOutEnabled ? Visibility.Visible : Visibility.Collapsed;
+            SelectComboByTag(VoiceGenderBox, s.Translation.VoiceGender);
+            SyncVoiceOutDeviceSelection();
 
             LockButton.Content = s.OverlayLayout.Locked ? "Unlock overlay" : "Lock overlay (click-through)";
 
@@ -538,6 +545,88 @@ public partial class MainWindow : Window
         if (_binding) return;
         App.Settings.Current.ShowOriginalText = ShowOriginalCheck.IsChecked == true;
         Commit();
+    }
+
+    // --- translation output ---
+
+    private void CaptionsEnabledCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_binding) return;
+        App.Settings.Current.Translation.CaptionsEnabled = CaptionsEnabledCheck.IsChecked == true;
+        Commit();
+    }
+
+    private void VoiceEnabledCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_binding) return;
+        var on = VoiceEnabledCheck.IsChecked == true;
+        App.Settings.Current.Translation.VoiceOutEnabled = on;
+        VoiceOutConfig.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+        Commit();
+    }
+
+    private void VoiceGenderBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_binding) return;
+        if (VoiceGenderBox.SelectedItem is ComboBoxItem item && item.Tag is string tag)
+        {
+            App.Settings.Current.Translation.VoiceGender = tag;
+            Commit();
+        }
+    }
+
+    private void RefreshVoiceOutDevices()
+    {
+        var wasBinding = _binding;
+        _binding = true;
+        try
+        {
+            VoiceOutDeviceBox.Items.Clear();
+            VoiceOutDeviceBox.Items.Add(new ComboBoxItem { Content = "Default output device", Tag = null });
+            foreach (var dev in App.Audio.EnumerateDevices())
+            {
+                if (dev.Kind != AudioDeviceKind.Render) continue;
+                var suffix = dev.IsDefault ? "  (default)" : "";
+                VoiceOutDeviceBox.Items.Add(new ComboBoxItem
+                {
+                    Content = $"🔊  {dev.FriendlyName}{suffix}",
+                    Tag = dev.Id,
+                });
+            }
+            SyncVoiceOutDeviceSelection();
+        }
+        finally { _binding = wasBinding; }
+    }
+
+    private void SyncVoiceOutDeviceSelection()
+    {
+        var id = App.Settings.Current.Translation.VoiceOutDeviceId;
+        foreach (ComboBoxItem item in VoiceOutDeviceBox.Items)
+        {
+            if ((item.Tag as string) == id) { VoiceOutDeviceBox.SelectedItem = item; return; }
+        }
+        VoiceOutDeviceBox.SelectedIndex = 0;
+    }
+
+    private void VoiceOutDeviceBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_binding) return;
+        if (VoiceOutDeviceBox.SelectedItem is ComboBoxItem item)
+        {
+            App.Settings.Current.Translation.VoiceOutDeviceId = item.Tag as string;
+            Commit();
+        }
+    }
+
+    private void RefreshVoiceOutDevicesButton_Click(object sender, RoutedEventArgs e) => RefreshVoiceOutDevices();
+
+    private static void SelectComboByTag(ComboBox box, string tag)
+    {
+        foreach (ComboBoxItem item in box.Items)
+        {
+            if ((item.Tag as string) == tag) { box.SelectedItem = item; return; }
+        }
+        if (box.Items.Count > 0) box.SelectedIndex = 0;
     }
 
     private void TestFireButton_Click(object sender, RoutedEventArgs e)
