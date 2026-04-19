@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35303.130
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoiceBuddy.App", "src\VoiceBuddy.App\VoiceBuddy.App.csproj", "{6B7A3F4D-1C5E-4E2E-9D01-1A2B3C4D5E6F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6B7A3F4D-1C5E-4E2E-9D01-1A2B3C4D5E6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B7A3F4D-1C5E-4E2E-9D01-1A2B3C4D5E6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B7A3F4D-1C5E-4E2E-9D01-1A2B3C4D5E6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B7A3F4D-1C5E-4E2E-9D01-1A2B3C4D5E6F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

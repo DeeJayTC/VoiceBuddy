@@ -1,0 +1,31 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+_ReSharper*/
+*.DotSettings.user
+
+# Publish output
+publish/
+artifacts/
+*.pdb
+*.dll.config
+
+# IDE
+.idea/
+*.swp
+.DS_Store
+
+# Whisper models (download on first run)
+models/*.bin
+models/*.gguf
+
+# Local secrets
+appsettings.Local.json
+.env
+.env.local
+
+# Test output
+TestResults/

@@ -1,0 +1,62 @@
+<Window x:Class="VoiceBuddy.Views.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="VoiceBuddy Overlay"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        SizeToContent="Manual"
+        Width="960" Height="220"
+        MinWidth="320" MinHeight="80"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+  <Grid x:Name="Stage" Background="Transparent" MouseLeftButtonDown="Stage_MouseLeftButtonDown">
+    <!-- Full-window panel background. Drawn first so it sits behind everything; the user
+         can dial opacity from 0 (default, transparent overlay) up to a solid block. -->
+    <Border x:Name="PanelBackground" IsHitTestVisible="False" />
+
+    <Border x:Name="DragAffordance" BorderThickness="1" CornerRadius="6"
+            BorderBrush="#804F8CFF" Background="#104F8CFF"
+            Visibility="Collapsed" IsHitTestVisible="False">
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+        <TextBlock Text="Drag to reposition · drag edges to resize" Foreground="#CCFFFFFF"
+                   FontFamily="Segoe UI" FontSize="13" FontWeight="SemiBold"
+                   HorizontalAlignment="Center" />
+        <TextBlock Text="Lock overlay to make it click-through" Foreground="#99FFFFFF"
+                   FontFamily="Segoe UI" FontSize="11"
+                   HorizontalAlignment="Center" Margin="0,4,0,0" />
+      </StackPanel>
+    </Border>
+
+    <!-- Stack of per-sentence bubbles. Built in code on every snapshot update.
+         Newest at the bottom; older concluded sentences above; tentative at the very
+         bottom in dim color. Empty until something arrives. -->
+    <StackPanel x:Name="BubbleStack" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Margin="8" IsHitTestVisible="False" Opacity="0" />
+
+    <!-- Resize grips + in-overlay lock button. -->
+    <Grid x:Name="ResizeGrips" Visibility="Collapsed">
+      <Rectangle x:Name="GripRight" Width="8" HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                 Fill="#604F8CFF" Cursor="SizeWE" Margin="0,8,0,20"
+                 MouseLeftButtonDown="Grip_MouseLeftButtonDown" Tag="Right" />
+      <Rectangle x:Name="GripBottom" Height="8" HorizontalAlignment="Stretch" VerticalAlignment="Bottom"
+                 Fill="#604F8CFF" Cursor="SizeNS" Margin="8,0,20,0"
+                 MouseLeftButtonDown="Grip_MouseLeftButtonDown" Tag="Bottom" />
+      <Rectangle x:Name="GripCorner" Width="16" Height="16" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                 Fill="#C04F8CFF" Cursor="SizeNWSE"
+                 MouseLeftButtonDown="Grip_MouseLeftButtonDown" Tag="Corner" />
+
+      <Border x:Name="OverlayLockButton"
+              HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
+              Background="#D04F8CFF" CornerRadius="4" Padding="10,6"
+              Cursor="Hand"
+              MouseLeftButtonDown="OverlayLockButton_MouseLeftButtonDown">
+        <TextBlock Text="🔒 Lock" Foreground="White"
+                   FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold" />
+      </Border>
+    </Grid>
+  </Grid>
+</Window>
