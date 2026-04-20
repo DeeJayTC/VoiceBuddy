@@ -126,10 +126,17 @@
             </GroupBox>
 
             <GroupBox Header="Testing">
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                <Button Content="Fire test subtitle" Click="TestFireButton_Click" />
-                <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="12,0,0,0" VerticalAlignment="Center"
-                           Text="Pushes a fake German→English subtitle into the overlay. Useful for tuning styling without burning a live session." />
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                  <Button Content="Fire test subtitle" Click="TestFireButton_Click" />
+                  <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="12,0,0,0" VerticalAlignment="Center"
+                             Text="Pushes a fake German→English subtitle into the overlay. Useful for tuning styling without burning a live session." />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,2">
+                  <Button Content="Clear captions" Click="ClearCaptionsButton_Click" />
+                  <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="12,0,0,0" VerticalAlignment="Center"
+                             Text="Wipes the overlay immediately." />
+                </StackPanel>
               </StackPanel>
             </GroupBox>
           </StackPanel>
@@ -144,15 +151,35 @@
               <StackPanel>
                 <StackPanel Style="{StaticResource Row}">
                   <Label Style="{StaticResource RowLabel}" Content="Target lang" />
-                  <TextBox x:Name="TargetLangBox" Width="140" LostFocus="TargetLangBox_LostFocus" />
+                  <ComboBox x:Name="TargetLangBox" Width="260"
+                            IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
+                            TextSearch.TextPath="Label"
+                            SelectionChanged="TargetLangBox_SelectionChanged"
+                            LostFocus="TargetLangBox_LostFocus">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Label}" />
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
                   <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="10,0,0,0" VerticalAlignment="Center"
-                             Text="BCP 47 (e.g. en-US, de, fr)" />
+                             Text="Type to filter. Only DeepL-supported values are accepted." />
                 </StackPanel>
                 <StackPanel Style="{StaticResource Row}">
                   <Label Style="{StaticResource RowLabel}" Content="Source lang" />
-                  <TextBox x:Name="SourceLangBox" Width="140" LostFocus="SourceLangBox_LostFocus" />
+                  <ComboBox x:Name="SourceLangBox" Width="260"
+                            IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
+                            TextSearch.TextPath="Label"
+                            SelectionChanged="SourceLangBox_SelectionChanged"
+                            LostFocus="SourceLangBox_LostFocus">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Label}" />
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
                   <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="10,0,0,0" VerticalAlignment="Center"
-                             Text="'auto' lets DeepL detect the source" />
+                             Text="'Auto' lets DeepL detect the source." />
                 </StackPanel>
                 <StackPanel Style="{StaticResource Row}">
                   <Label Style="{StaticResource RowLabel}" Content="Host" />
@@ -346,6 +373,23 @@
                     </StackPanel>
                   </StackPanel>
                 </GroupBox>
+
+                <GroupBox Header="Timing">
+                  <StackPanel>
+                    <StackPanel Style="{StaticResource Row}">
+                      <Label Style="{StaticResource RowLabel}" Content="New sentence (s)" />
+                      <Slider x:Name="NewSentenceSecondsSlider" Minimum="1" Maximum="20" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="NewSentenceSecondsSlider_ValueChanged" />
+                      <TextBlock x:Name="NewSentenceSecondsValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource Row}">
+                      <Label Style="{StaticResource RowLabel}" Content="Clear after (s)" />
+                      <Slider x:Name="ClearAfterSecondsSlider" Minimum="5" Maximum="120" Width="220" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="ClearAfterSecondsSlider_ValueChanged" />
+                      <TextBlock x:Name="ClearAfterSecondsValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
+                               Text="Silence past 'new sentence' splits the current utterance into its own bubble. Silence past 'clear after' wipes the overlay entirely." />
+                  </StackPanel>
+                </GroupBox>
               </StackPanel>
             </ScrollViewer>
           </Border>
@@ -360,6 +404,12 @@
                   <Button x:Name="LockButton" Style="{StaticResource SecondaryButton}" Content="Lock overlay (click-through)"
                           HorizontalAlignment="Right" Click="LockButton_Click" Padding="10,4" />
                 </Grid>
+
+                <CheckBox x:Name="ObsCaptureModeCheck" Content="OBS capture mode (show overlay in window pickers)"
+                          Margin="0,0,0,2"
+                          Checked="ObsCaptureModeCheck_Changed" Unchecked="ObsCaptureModeCheck_Changed" />
+                <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="22,0,0,8"
+                           Text="Exposes the overlay to OBS as 'VoiceBuddy — Subtitles'. In OBS Window Capture, set Capture Method to 'Windows 10 (1903 and up)' to preserve transparency." />
 
                 <Border x:Name="PreviewSurface" Height="240" CornerRadius="8" BorderBrush="{StaticResource Border}" BorderThickness="1" ClipToBounds="True">
                   <Border.Background>

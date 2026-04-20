@@ -14,6 +14,7 @@ public partial class App : Application
     public static VoiceOutPlayer VoiceOut { get; private set; } = null!;
     public static TrayService Tray { get; private set; } = null!;
     public static DebugLog Debug { get; private set; } = null!;
+    public static DeepLLanguagesService Languages { get; private set; } = null!;
 
     private OverlayWindow? _overlay;
 
@@ -28,6 +29,7 @@ public partial class App : Application
         Audio = new AudioCaptureService();
         Voice = new DeepLVoiceService(Debug);
         VoiceOut = new VoiceOutPlayer();
+        Languages = new DeepLLanguagesService(Debug);
 
         // Capture → DeepL Voice (transcribe + translate in one session) → publish snapshots.
         Audio.FrameAvailable += (_, frame) => Voice.AddFrame(frame);
@@ -89,5 +91,10 @@ public partial class App : Application
         Audio.Stop();
         Voice.Stop();
         VoiceOut.Stop();
+    }
+
+    public static void ClearOverlay()
+    {
+        if (Current is App a) a._overlay?.ClearCaptions();
     }
 }

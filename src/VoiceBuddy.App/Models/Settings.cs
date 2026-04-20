@@ -33,6 +33,8 @@ public sealed class OverlayStyle : INotifyPropertyChanged
     private int _maxVisibleSentences = 5;
     private string _panelBackgroundColor = "#000000";
     private double _panelBackgroundOpacity;
+    private int _newSentenceAfterSeconds = 4;
+    private int _clearAfterSeconds = 30;
 
     public string FontFamily { get => _fontFamily; set => Set(ref _fontFamily, value); }
     public int FontSize { get => _fontSize; set => Set(ref _fontSize, value); }
@@ -51,6 +53,13 @@ public sealed class OverlayStyle : INotifyPropertyChanged
     public int MaxVisibleSentences { get => _maxVisibleSentences; set => Set(ref _maxVisibleSentences, value); }
     public string PanelBackgroundColor { get => _panelBackgroundColor; set => Set(ref _panelBackgroundColor, value); }
     public double PanelBackgroundOpacity { get => _panelBackgroundOpacity; set => Set(ref _panelBackgroundOpacity, value); }
+
+    // Split the current utterance into its own bubble when nothing new has arrived for this
+    // many seconds. Keeps one continuous monologue from becoming one monster pending bubble.
+    public int NewSentenceAfterSeconds { get => _newSentenceAfterSeconds; set => Set(ref _newSentenceAfterSeconds, value); }
+
+    // Wipe the overlay entirely after this many seconds of silence.
+    public int ClearAfterSeconds { get => _clearAfterSeconds; set => Set(ref _clearAfterSeconds, value); }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -73,6 +82,7 @@ public sealed class OverlayLayout : INotifyPropertyChanged
     private bool _locked;
     private double _freeLeft;
     private double _freeTop;
+    private bool _obsCaptureMode;
 
     public OverlayMode Mode { get => _mode; set => Set(ref _mode, value); }
     public Anchor Anchor { get => _anchor; set => Set(ref _anchor, value); }
@@ -83,6 +93,11 @@ public sealed class OverlayLayout : INotifyPropertyChanged
     public bool Locked { get => _locked; set => Set(ref _locked, value); }
     public double FreeLeft { get => _freeLeft; set => Set(ref _freeLeft, value); }
     public double FreeTop { get => _freeTop; set => Set(ref _freeTop, value); }
+
+    // Opt-in "show up cleanly in OBS's Window Capture picker": clears the tool-window
+    // extended style, enables a taskbar entry, and swaps the window title. Capture still
+    // requires OBS's WGC capture method because the overlay is a layered (transparent) window.
+    public bool ObsCaptureMode { get => _obsCaptureMode; set => Set(ref _obsCaptureMode, value); }
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Set<T>(ref T field, T value, [CallerMemberName] string? name = null)

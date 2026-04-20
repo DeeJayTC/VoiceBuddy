@@ -1,0 +1,28 @@
+flowchart LR
+    subgraph Capture["Capture"]
+        A[System / Per-App<br/>Audio Source]
+        B[PCM Converter<br/>resample · mono · 16-bit]
+    end
+
+    subgraph DeepL["DeepL Cloud"]
+        D[Speech-to-Speech<br/>+ Translate API]
+    end
+
+    subgraph Playback["Output"]
+        E[Chunk Buffer<br/>ordered · jitter-safe]
+        F[Audio Stream<br/>to speakers / virtual mic]
+        G[Caption Renderer<br/>on-screen overlay]
+    end
+
+    A -->|raw frames| B
+    B -->|PCM stream| D
+    D -->|audio chunks| E
+    D -->|text chunks| G
+    E --> F
+
+    classDef src fill:#0F2B46,stroke:#3FA9F5,color:#E6F1FF
+    classDef cloud fill:#0057FF,stroke:#66A3FF,color:#FFFFFF
+    classDef out fill:#1F3A2B,stroke:#4ADE80,color:#E6FFF1
+    class A,B src
+    class D cloud
+    class E,F,G out

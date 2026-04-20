@@ -18,11 +18,21 @@ public static class WindowNative
     [DllImport("user32.dll")]
     private static extern int SetWindowLong(IntPtr hwnd, int index, int newStyle);
 
-    public static void MakeToolWindow(Window window)
+    /// <summary>
+    /// Applies the overlay's always-on extended styles and toggles tool-window based on
+    /// <paramref name="obsCaptureMode"/>. With OBS mode off the window is a tool window
+    /// (hidden from Alt-Tab / OBS picker). With OBS mode on it appears as a normal window
+    /// so OBS's Window Capture can list it. WS_EX_NOACTIVATE stays on in both modes so the
+    /// overlay never steals focus from the app the user is actually interacting with.
+    /// </summary>
+    public static void ApplyOverlayStyles(Window window, bool obsCaptureMode)
     {
         var hwnd = new WindowInteropHelper(window).EnsureHandle();
         var ex = GetWindowLong(hwnd, GWL_EXSTYLE);
-        SetWindowLong(hwnd, GWL_EXSTYLE, ex | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
+        ex |= WS_EX_NOACTIVATE;
+        if (obsCaptureMode) ex &= ~WS_EX_TOOLWINDOW;
+        else ex |= WS_EX_TOOLWINDOW;
+        SetWindowLong(hwnd, GWL_EXSTYLE, ex);
     }
 
     public static void SetClickThrough(Window window, bool clickThrough)

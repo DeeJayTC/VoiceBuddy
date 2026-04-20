@@ -11,7 +11,6 @@ namespace VoiceBuddy.Views;
 
 public partial class OverlayWindow : Window
 {
-    private static readonly TimeSpan IdleFadeAfter = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan FadeInTime = TimeSpan.FromMilliseconds(160);
     private static readonly TimeSpan FadeOutTime = TimeSpan.FromMilliseconds(700);
 
@@ -29,10 +28,17 @@ public partial class OverlayWindow : Window
     private TranscriptSnapshot _tgtSnap = TranscriptSnapshot.Empty("auto");
     private TranscriptSnapshot _srcSnap = TranscriptSnapshot.Empty("auto");
 
+    // Prefix of the current utterance that we've already force-finalized (because the user
+    // paused for NewSentenceAfterSeconds). If the server later concludes the full utterance
+    // for real, we subtract this prefix so the natural-finalize path only emits the delta.
+    private string _tgtForcedPrefix = "";
+    private string _srcForcedPrefix = "";
+
     // UI — one BoxView per visible bubble. When we need more, we create; when we need fewer,
     // we drop the oldest (index 0), which is exactly the "use the oldest slot again" behavior.
     private readonly List<BoxView> _views = new();
-    private DispatcherTimer? _idleTimer;
+    private DispatcherTimer? _newSentenceTimer;
+    private DispatcherTimer? _clearTimer;
 
     private sealed class BoxView
     {
@@ -45,9 +51,13 @@ public partial class OverlayWindow : Window
     {
         InitializeComponent();
 
+        // ShowInTaskbar / Title depend on the OBS-capture setting and must be set before
+        // the HWND is created so WPF doesn't have to recreate it on the first settings sync.
+        ApplyObsCaptureMode();
+
         SourceInitialized += (_, __) =>
         {
-            WindowNative.MakeToolWindow(this);
+            WindowNative.ApplyOverlayStyles(this, App.Settings.Current.OverlayLayout.ObsCaptureMode);
             ApplyLayout();
             ApplyClickThrough();
             ApplyPanelBackground();
@@ -61,7 +71,8 @@ public partial class OverlayWindow : Window
             App.Settings.Changed -= OnSettingsChanged;
             App.Subtitles.SourceUpdated -= OnSourceUpdated;
             App.Subtitles.TargetUpdated -= OnTargetUpdated;
-            _idleTimer?.Stop();
+            _newSentenceTimer?.Stop();
+            _clearTimer?.Stop();
         };
     }
 
@@ -71,11 +82,21 @@ public partial class OverlayWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
+            ApplyObsCaptureMode();
+            // WPF's ShowInTaskbar toggle can rewrite extended styles, so reapply ours.
+            WindowNative.ApplyOverlayStyles(this, s.OverlayLayout.ObsCaptureMode);
             ApplyLayout();
             ApplyClickThrough();
             ApplyPanelBackground();
             RenderTranscript();
         });
+    }
+
+    private void ApplyObsCaptureMode()
+    {
+        var obs = App.Settings.Current.OverlayLayout.ObsCaptureMode;
+        ShowInTaskbar = obs;
+        Title = obs ? "VoiceBuddy — Subtitles" : "VoiceBuddy Overlay";
     }
 
     private void ApplyPanelBackground()
@@ -214,9 +235,9 @@ public partial class OverlayWindow : Window
         Dispatcher.Invoke(() =>
         {
             _tgtSnap = snap;
-            IngestSide(ref _tgtStart, _tgtFinalized, snap);
+            IngestSide(ref _tgtStart, ref _tgtForcedPrefix, _tgtFinalized, snap);
             RenderTranscript();
-            KickIdleTimer();
+            KickTimers();
         });
     }
 
@@ -225,24 +246,27 @@ public partial class OverlayWindow : Window
         Dispatcher.Invoke(() =>
         {
             _srcSnap = snap;
-            IngestSide(ref _srcStart, _srcFinalized, snap);
+            IngestSide(ref _srcStart, ref _srcForcedPrefix, _srcFinalized, snap);
             RenderTranscript();
-            KickIdleTimer();
+            KickTimers();
         });
     }
 
     /// <summary>
     /// Advances per-side state with a new snapshot. Finalizes the current utterance when
     /// tentative is empty and concluded has any unfinalized segments. Detects session
-    /// resets (concluded count dropped below our bookmark) and rewinds.
+    /// resets (concluded count dropped below our bookmark) and rewinds. Subtracts any
+    /// already-force-captured prefix so we don't duplicate text when the server naturally
+    /// concludes an utterance we split manually via the new-sentence timer.
     /// </summary>
-    private static void IngestSide(ref int start, List<string> finalized, TranscriptSnapshot snap)
+    private static void IngestSide(ref int start, ref string forcedPrefix, List<string> finalized, TranscriptSnapshot snap)
     {
         // Session reset: the service cleared state and is publishing a fresh empty snapshot.
         if (snap.Concluded.Count < start)
         {
             finalized.Clear();
             start = 0;
+            forcedPrefix = "";
         }
 
         var isEmpty = snap.Tentative.Count == 0;
@@ -250,24 +274,32 @@ public partial class OverlayWindow : Window
 
         if (isEmpty && hasUnfinalizedConcluded)
         {
-            var text = string.Concat(snap.Concluded.Skip(start).Select(s => s.Text)).Trim();
+            var raw = string.Concat(snap.Concluded.Skip(start).Select(s => s.Text));
+            var text = StripPrefix(raw, forcedPrefix).Trim();
             if (!string.IsNullOrEmpty(text))
                 finalized.Add(text);
             start = snap.Concluded.Count;
+            forcedPrefix = "";
         }
     }
 
     /// <summary>
     /// Builds the "current utterance" text for a side: any concluded segments past our
-    /// bookmark joined with the current tentative. Empty when nothing is in progress.
+    /// bookmark joined with the current tentative, minus any prefix we already captured
+    /// via a force-finalize. Empty when nothing is in progress.
     /// </summary>
-    private static string ComposeCurrent(TranscriptSnapshot snap, int start)
+    private static string ComposeCurrent(TranscriptSnapshot snap, int start, string forcedPrefix)
     {
         if (snap.Concluded.Count == start && snap.Tentative.Count == 0) return "";
         var conc = string.Concat(snap.Concluded.Skip(start).Select(s => s.Text));
         var tent = string.Concat(snap.Tentative.Select(s => s.Text));
-        return (conc + tent).Trim();
+        return StripPrefix(conc + tent, forcedPrefix).Trim();
     }
+
+    private static string StripPrefix(string s, string prefix)
+        => !string.IsNullOrEmpty(prefix) && s.StartsWith(prefix, StringComparison.Ordinal)
+            ? s[prefix.Length..]
+            : s;
 
     // ---------- rendering ----------
 
@@ -278,8 +310,8 @@ public partial class OverlayWindow : Window
         var max = Math.Max(1, style.MaxVisibleSentences);
         var showOriginal = s.ShowOriginalText;
 
-        var tgtCurrent = ComposeCurrent(_tgtSnap, _tgtStart);
-        var srcCurrent = ComposeCurrent(_srcSnap, _srcStart);
+        var tgtCurrent = ComposeCurrent(_tgtSnap, _tgtStart, _tgtForcedPrefix);
+        var srcCurrent = ComposeCurrent(_srcSnap, _srcStart, _srcForcedPrefix);
 
         // Build the desired slot list: finalized target sentences (each pairs with the
         // finalized source sentence at the same index if ShowOriginal is on) + one trailing
@@ -427,18 +459,65 @@ public partial class OverlayWindow : Window
             : null;
     }
 
-    // ---------- idle fade ----------
+    // ---------- idle timers ----------
 
-    private void KickIdleTimer()
+    private void KickTimers()
     {
-        _idleTimer?.Stop();
-        _idleTimer = new DispatcherTimer { Interval = IdleFadeAfter };
-        _idleTimer.Tick += (_, _) =>
+        var style = App.Settings.Current.OverlayStyle;
+
+        _newSentenceTimer?.Stop();
+        _newSentenceTimer = new DispatcherTimer
         {
-            _idleTimer?.Stop();
+            Interval = TimeSpan.FromSeconds(Math.Max(1, style.NewSentenceAfterSeconds)),
+        };
+        _newSentenceTimer.Tick += (_, _) =>
+        {
+            _newSentenceTimer?.Stop();
+            ForceNewSentence();
+        };
+        _newSentenceTimer.Start();
+
+        _clearTimer?.Stop();
+        _clearTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(Math.Max(style.NewSentenceAfterSeconds + 1, style.ClearAfterSeconds)),
+        };
+        _clearTimer.Tick += (_, _) =>
+        {
+            _clearTimer?.Stop();
             FadeBubbleOut();
         };
-        _idleTimer.Start();
+        _clearTimer.Start();
+    }
+
+    private void ForceNewSentence()
+    {
+        ForceFinalizeSide(ref _tgtStart, ref _tgtForcedPrefix, _tgtFinalized, _tgtSnap);
+        ForceFinalizeSide(ref _srcStart, ref _srcForcedPrefix, _srcFinalized, _srcSnap);
+        RenderTranscript();
+    }
+
+    /// <summary>
+    /// Moves whatever's currently pending on this side into the finalized list as its own
+    /// bubble. Remembers the full raw text in <paramref name="forcedPrefix"/> so if the
+    /// server later naturally concludes the same utterance we subtract this prefix and
+    /// only emit the delta (the words spoken after the pause).
+    /// </summary>
+    private static void ForceFinalizeSide(ref int start, ref string forcedPrefix, List<string> finalized, TranscriptSnapshot snap)
+    {
+        var raw = string.Concat(snap.Concluded.Skip(start).Select(s => s.Text)) +
+                  string.Concat(snap.Tentative.Select(s => s.Text));
+        var delta = StripPrefix(raw, forcedPrefix).Trim();
+        if (string.IsNullOrEmpty(delta)) return;
+        finalized.Add(delta);
+        forcedPrefix = raw;
+    }
+
+    public void ClearCaptions()
+    {
+        _newSentenceTimer?.Stop();
+        _clearTimer?.Stop();
+        FadeBubbleOut();
     }
 
     private void FadeBubbleOut()
@@ -453,6 +532,8 @@ public partial class OverlayWindow : Window
             _srcFinalized.Clear();
             _tgtStart = 0;
             _srcStart = 0;
+            _tgtForcedPrefix = "";
+            _srcForcedPrefix = "";
         };
         BubbleStack.BeginAnimation(OpacityProperty, anim);
     }

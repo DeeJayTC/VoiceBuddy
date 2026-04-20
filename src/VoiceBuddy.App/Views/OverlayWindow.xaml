@@ -6,7 +6,6 @@
         AllowsTransparency="True"
         Background="Transparent"
         Topmost="True"
-        ShowInTaskbar="False"
         ResizeMode="NoResize"
         SizeToContent="Manual"
         Width="960" Height="220"

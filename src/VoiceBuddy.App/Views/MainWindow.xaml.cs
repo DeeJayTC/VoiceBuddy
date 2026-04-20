@@ -19,6 +19,9 @@ public partial class MainWindow : Window
 
     private bool _balloonShown;
 
+    private readonly List<DeepLLanguage> _sourceLangs = new();
+    private readonly List<DeepLLanguage> _targetLangs = new();
+
     public MainWindow()
     {
         InitializeComponent();
@@ -29,14 +32,17 @@ public partial class MainWindow : Window
         App.Voice.StatusChanged += OnVoiceStatus;
         App.Debug.EntryAdded += OnDebugEntry;
         App.Debug.Cleared += OnDebugCleared;
+        App.Languages.Updated += OnLanguagesUpdated;
         StateChanged += OnStateChanged;
         Loaded += (_, __) =>
         {
             RefreshDevices();
             RefreshVoiceOutDevices();
+            InitLanguagePickers();
             BindFromSettings();
             TryLoadLogo();
             AutoStartIfConfigured();
+            TriggerLanguageRefresh();
         };
         Closed += (_, __) =>
         {
@@ -46,6 +52,7 @@ public partial class MainWindow : Window
             App.Voice.StatusChanged -= OnVoiceStatus;
             App.Debug.EntryAdded -= OnDebugEntry;
             App.Debug.Cleared -= OnDebugCleared;
+            App.Languages.Updated -= OnLanguagesUpdated;
             StateChanged -= OnStateChanged;
         };
     }
@@ -108,6 +115,10 @@ public partial class MainWindow : Window
             MaxLinesValue.Text = s.OverlayStyle.MaxLines.ToString(CultureInfo.InvariantCulture);
             MaxSentencesSlider.Value = s.OverlayStyle.MaxVisibleSentences;
             MaxSentencesValue.Text = s.OverlayStyle.MaxVisibleSentences.ToString(CultureInfo.InvariantCulture);
+            NewSentenceSecondsSlider.Value = s.OverlayStyle.NewSentenceAfterSeconds;
+            NewSentenceSecondsValue.Text = s.OverlayStyle.NewSentenceAfterSeconds.ToString(CultureInfo.InvariantCulture);
+            ClearAfterSecondsSlider.Value = s.OverlayStyle.ClearAfterSeconds;
+            ClearAfterSecondsValue.Text = s.OverlayStyle.ClearAfterSeconds.ToString(CultureInfo.InvariantCulture);
 
             PanelBgColorBox.Text = s.OverlayStyle.PanelBackgroundColor;
             PanelBgColorSwatch.Background = BrushFromHex(s.OverlayStyle.PanelBackgroundColor);
@@ -129,8 +140,8 @@ public partial class MainWindow : Window
                 : "Anchored";
             ResetAnchorButton.IsEnabled = s.OverlayLayout.Mode == OverlayMode.Free;
 
-            TargetLangBox.Text = s.Translation.TargetLang;
-            SourceLangBox.Text = s.Translation.SourceLang;
+            SelectLanguageByCode(TargetLangBox, s.Translation.TargetLang);
+            SelectLanguageByCode(SourceLangBox, s.Translation.SourceLang);
             SelectComboByContent(HostBox, s.Translation.DeepLApiHost);
             ApiKeyBox.Password = s.Translation.DeepLApiKey;
             ShowOriginalCheck.IsChecked = s.ShowOriginalText;
@@ -142,6 +153,7 @@ public partial class MainWindow : Window
             SyncVoiceOutDeviceSelection();
 
             LockButton.Content = s.OverlayLayout.Locked ? "Unlock overlay" : "Lock overlay (click-through)";
+            ObsCaptureModeCheck.IsChecked = s.OverlayLayout.ObsCaptureMode;
 
             UpdatePreview();
         }
@@ -345,6 +357,24 @@ public partial class MainWindow : Window
         Commit();
     }
 
+    private void NewSentenceSecondsSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (_binding) return;
+        var v = (int)e.NewValue;
+        App.Settings.Current.OverlayStyle.NewSentenceAfterSeconds = v;
+        NewSentenceSecondsValue.Text = v.ToString(CultureInfo.InvariantCulture);
+        Commit();
+    }
+
+    private void ClearAfterSecondsSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (_binding) return;
+        var v = (int)e.NewValue;
+        App.Settings.Current.OverlayStyle.ClearAfterSeconds = v;
+        ClearAfterSecondsValue.Text = v.ToString(CultureInfo.InvariantCulture);
+        Commit();
+    }
+
     private void PanelBgColorBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (_binding) return;
@@ -509,18 +539,140 @@ public partial class MainWindow : Window
         }
     }
 
-    private void TargetLangBox_LostFocus(object sender, RoutedEventArgs e)
+    // --- language pickers ---
+
+    private void InitLanguagePickers()
+    {
+        SourceLangBox.ItemsSource = _sourceLangs;
+        TargetLangBox.ItemsSource = _targetLangs;
+        RebuildLanguageLists();
+    }
+
+    private void TriggerLanguageRefresh()
+    {
+        var t = App.Settings.Current.Translation;
+        _ = App.Languages.RefreshAsync(t.DeepLApiHost, t.DeepLApiKey);
+    }
+
+    private void OnLanguagesUpdated(object? sender, EventArgs e)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            RebuildLanguageLists();
+            SelectLanguageByCode(SourceLangBox, App.Settings.Current.Translation.SourceLang);
+            SelectLanguageByCode(TargetLangBox, App.Settings.Current.Translation.TargetLang);
+        });
+    }
+
+    private void RebuildLanguageLists()
+    {
+        _sourceLangs.Clear();
+        _sourceLangs.Add(new DeepLLanguage("auto", "Auto (detect)"));
+        foreach (var l in App.Languages.Source) _sourceLangs.Add(l);
+
+        _targetLangs.Clear();
+        foreach (var l in App.Languages.Target) _targetLangs.Add(l);
+
+        // ItemsSource is the list itself — resetting it forces the ComboBox to re-read
+        // after the in-place clear/add above (plain List<T> doesn't raise change events).
+        SourceLangBox.ItemsSource = null;
+        SourceLangBox.ItemsSource = _sourceLangs;
+        TargetLangBox.ItemsSource = null;
+        TargetLangBox.ItemsSource = _targetLangs;
+    }
+
+    private static DeepLLanguage? FindLanguage(IEnumerable<DeepLLanguage> rows, string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+        var trimmed = text.Trim();
+        foreach (var r in rows)
+        {
+            if (r.Code.Equals(trimmed, StringComparison.OrdinalIgnoreCase)) return r;
+            if (r.Label.Equals(trimmed, StringComparison.OrdinalIgnoreCase)) return r;
+            if (r.Name.Equals(trimmed, StringComparison.OrdinalIgnoreCase)) return r;
+        }
+        return null;
+    }
+
+    private void SelectLanguageByCode(ComboBox combo, string code)
+    {
+        var list = ReferenceEquals(combo, SourceLangBox) ? _sourceLangs : _targetLangs;
+        var row = list.FirstOrDefault(l => l.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
+        if (row is not null)
+        {
+            combo.SelectedItem = row;
+            combo.Text = row.Label;
+        }
+        else
+        {
+            combo.SelectedItem = null;
+            combo.Text = code;
+        }
+    }
+
+    private void SourceLangBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_binding) return;
-        App.Settings.Current.Translation.TargetLang = TargetLangBox.Text.Trim().ToUpperInvariant();
-        Commit();
+        if (SourceLangBox.SelectedItem is DeepLLanguage row)
+        {
+            App.Settings.Current.Translation.SourceLang = row.Code;
+            Commit();
+        }
+    }
+
+    private void TargetLangBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_binding) return;
+        if (TargetLangBox.SelectedItem is DeepLLanguage row)
+        {
+            App.Settings.Current.Translation.TargetLang = row.Code;
+            Commit();
+        }
     }
 
     private void SourceLangBox_LostFocus(object sender, RoutedEventArgs e)
     {
         if (_binding) return;
-        App.Settings.Current.Translation.SourceLang = SourceLangBox.Text.Trim();
-        Commit();
+        CommitLanguagePicker(SourceLangBox, _sourceLangs, App.Settings.Current.Translation.SourceLang,
+            code => App.Settings.Current.Translation.SourceLang = code);
+    }
+
+    private void TargetLangBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (_binding) return;
+        CommitLanguagePicker(TargetLangBox, _targetLangs, App.Settings.Current.Translation.TargetLang,
+            code => App.Settings.Current.Translation.TargetLang = code);
+    }
+
+    private void CommitLanguagePicker(ComboBox combo, List<DeepLLanguage> list, string currentCode, Action<string> setCode)
+    {
+        var match = FindLanguage(list, combo.Text);
+        if (match is not null)
+        {
+            if (combo.SelectedItem as DeepLLanguage != match)
+            {
+                combo.SelectedItem = match;
+                setCode(match.Code);
+                Commit();
+            }
+            combo.Text = match.Label;
+        }
+        else if (list.Count == 0)
+        {
+            // Languages not fetched yet (no API key). Preserve whatever the user typed so
+            // they aren't blocked, but don't pretend we validated it.
+            var typed = (combo.Text ?? "").Trim();
+            if (!string.IsNullOrEmpty(typed) && !typed.Equals(currentCode, StringComparison.OrdinalIgnoreCase))
+            {
+                setCode(typed.ToUpperInvariant());
+                Commit();
+            }
+        }
+        else
+        {
+            // Revert to the saved value — we only accept codes DeepL returned.
+            SelectLanguageByCode(combo, currentCode);
+        }
     }
 
     private void HostBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -530,6 +682,7 @@ public partial class MainWindow : Window
         {
             App.Settings.Current.Translation.DeepLApiHost = host;
             Commit();
+            TriggerLanguageRefresh();
         }
     }
 
@@ -538,6 +691,7 @@ public partial class MainWindow : Window
         if (_binding) return;
         App.Settings.Current.Translation.DeepLApiKey = ApiKeyBox.Password;
         Commit();
+        TriggerLanguageRefresh();
     }
 
     private void ShowOriginalCheck_Changed(object sender, RoutedEventArgs e)
@@ -636,12 +790,21 @@ public partial class MainWindow : Window
         App.Subtitles.PublishTarget(dst);
     }
 
+    private void ClearCaptionsButton_Click(object sender, RoutedEventArgs e) => App.ClearOverlay();
+
     private void LockButton_Click(object sender, RoutedEventArgs e)
     {
         var s = App.Settings.Current;
         s.OverlayLayout.Locked = !s.OverlayLayout.Locked;
         App.Settings.Save(s);
         LockButton.Content = s.OverlayLayout.Locked ? "Unlock overlay" : "Lock overlay (click-through)";
+    }
+
+    private void ObsCaptureModeCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_binding) return;
+        App.Settings.Current.OverlayLayout.ObsCaptureMode = ObsCaptureModeCheck.IsChecked == true;
+        Commit();
     }
 
     // --- audio ---
