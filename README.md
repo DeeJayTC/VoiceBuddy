@@ -1,198 +1,157 @@
-# VoiceBuddy
+# DeepL Voice Buddy
 
-Real-time translated captions and translated-voice output for Windows, powered by the
+Real-time translated captions and voiceover, powered by the
 [DeepL Voice API](https://developers.deepl.com/api-reference/voice).
 
-Capture any audio source on your system — system output, a specific microphone, a game's
-voice chat — and see translated subtitles appear in a transparent overlay, or pipe the
-translated voice into OBS / Discord / Zoom as a virtual microphone.
+Watch foreign-language videos with captions in your own language. Join a call
+in German and read along in English. Speak into your mic and let other apps
+hear your translated voice. DeepL Voice Buddy runs on Windows, macOS, and any
+Chromium-based browser.
 
----
+## Three ways to run it
+
+| Client | What it hears | What it shows |
+| --- | --- | --- |
+| **Windows app** | Any system audio, any app, any mic, game voice chat | On-screen overlay, and optional translated voice out to any audio device (including virtual cables for OBS / Discord / Zoom) |
+| **macOS app** | Any microphone, system audio via ScreenCaptureKit | Menu-bar overlay, and optional translated voice out to any output device (works with BlackHole for virtual mic routing) |
+| **Chrome extension** | Audio from the active browser tab | Subtitle overlay anchored to the video element, and optional translated audio played back through the tab |
+
+All three share a settings format and route through the same DeepL Voice
+Realtime session protocol, so behaviour is consistent across platforms.
 
 ## Features
 
-- **Live captions** — translated subtitles in an always-on-top overlay. Each sentence
-  renders in its own box; while DeepL is still refining it, the text shows dimmed
-  ("tentative"), then crystallizes into full brightness when DeepL finalizes. A new
-  pending box slides in below for the next utterance. Configurable cap on how many
-  boxes stay on screen.
-- **Voice translation** — DeepL streams back the translated voice as 16 kHz PCM.
-  VoiceBuddy plays it through any WASAPI output device, including virtual cables
-  (VB-CABLE) for OBS / Discord integration.
-- **Any Windows audio source** — WASAPI loopback for system audio (game, browser,
-  Discord call playback) or direct capture from any microphone. Single device picker
-  lists both render (loopback) and capture endpoints.
-- **Fully configurable overlay** — font family / size / weight / color, outline, text
-  alignment, line height, per-bubble padding + radius, panel background color and
-  opacity, max visible sentences, anchored or free-drag positioning, resize grips.
-- **System tray** — minimize-to-tray, quick input-device switch, start / stop capture,
-  lock / unlock overlay, quit.
-- **Debug console** — toggleable log of every DeepL REST + WebSocket frame for
-  troubleshooting (see below).
-- **Settings persist** across sessions in `%AppData%\VoiceBuddy\settings.json`.
+* Live captions that update as DeepL transcribes. Unfinished text shows dimmed
+  while the model is still deciding; it sharpens into full brightness once a
+  segment is finalised.
+* Optional translated voiceover. DeepL streams the translated voice as
+  audio; the app plays it through any output device you pick.
+* Bring-your-own DeepL Pro key. Nothing is proxied through third parties,
+  your audio goes directly to DeepL.
+* Per-platform overlay styling: font, colour, size, background opacity,
+  anchor point, max visible lines, click-through.
+* Debug consoles that log every REST and WebSocket frame for easy
+  troubleshooting (desktop apps).
 
----
+## Getting started
 
-## Requirements
+You need a **DeepL API Pro** subscription. The Voice API is not currently on
+the Free tier. Grab a key from [deepl.com/pro-api](https://www.deepl.com/pro-api).
 
-- Windows 10 version 1809+ or Windows 11.
-- A **DeepL API Pro** subscription — DeepL Voice is not currently available on the
-  Free tier. [Sign up here](https://www.deepl.com/pro-api).
-- .NET 10 SDK — only required to build from source. Prebuilt single-file releases
-  bundle the runtime.
-- *Optional:* [VB-CABLE](https://vb-audio.com/Cable/) if you want to use the
-  translated voice as a virtual microphone in OBS / Discord / Zoom.
+### Windows
 
----
+1. Download the latest `VoiceBuddy.exe` from the releases page and run it.
+2. Open the **Settings** tab and paste your DeepL API key.
+3. On the **Overview** tab, pick an audio source from the **Device** dropdown.
+   Loopback devices (system audio) show a speaker icon, microphones show a
+   mic icon.
+4. Click **Start capture** and play some audio through the selected source.
+   Captions appear in the overlay.
 
-## Quick start
+Optional: check **Voice: stream translated audio** to also play the
+translated voice. Pick an output device and, if you like, a voice gender.
 
-1. Download the latest release (or build from source — see below), run `VoiceBuddy.exe`.
-2. Go to the **Settings** tab. Paste your DeepL API **Pro** key. Set target language
-   as a BCP 47 tag (`EN-US`, `DE`, `FR-CA`, …). Leave source language as `auto` unless
-   you have a reason to pin it.
-3. Go to the **Overview** tab. Pick an audio source from the **Device** dropdown
-   (loopback devices are prefixed with a speaker icon, microphones with a mic icon).
-4. Click **Start capture**. Talk or play audio through the chosen source.
-5. Translated captions appear in the overlay.
+### macOS
 
-### Enabling translated voice output
+1. Download the latest `VoiceBuddy.app` from the releases page and move it
+   to Applications.
+2. On first launch, macOS will ask for **Microphone** and **Screen Recording**
+   permissions. Screen Recording is how ScreenCaptureKit exposes system
+   audio; no video is actually recorded. Grant both in
+   **System Settings → Privacy & Security**.
+3. Open **Settings** and paste your DeepL API key.
+4. On the **Overview** tab, pick an input device and click **Start capture**.
 
-1. On the **Overview** tab, check **Voice — stream translated audio**.
-2. Pick an output device.
-3. Optionally pick a voice (female / male / auto). The voice availability depends on
-   the target language.
-4. Start capture. The translated voice streams out of the selected device alongside
-   (or instead of) the captions.
+The menu-bar icon gives you quick access to start, stop, and lock the
+overlay.
 
-### Using VoiceBuddy as a virtual microphone for OBS / Discord
+### Chrome / Edge / Brave
 
-1. Install [VB-CABLE](https://vb-audio.com/Cable/) (free, signed by VB-Audio).
-2. In VoiceBuddy's **Output device** dropdown, pick *CABLE Input (VB-Audio Virtual Cable)*.
-3. In OBS / Discord / Zoom, set the microphone input to *CABLE Output
-   (VB-Audio Virtual Cable)*.
-4. Talk in your real mic. VoiceBuddy captures it, DeepL translates + synthesizes, the
-   translated voice streams into CABLE Input, and OBS / Discord receives it on
-   CABLE Output as if it were your microphone.
+1. Clone this repo (or download the latest release zip).
+2. Open `chrome://extensions`, enable **Developer mode**, and click
+   **Load unpacked**. Point it at `src/VoiceBuddy.Chrome/`.
+3. Click the DeepL Voice Buddy icon in your toolbar, open **Settings**, and
+   paste your DeepL API key.
+4. Go to a tab with audio (YouTube, Twitch, Google Meet, Microsoft Teams web,
+   a podcast, anything). Open the popup, choose the output language, and
+   click **Start**.
 
----
+Captions appear overlaid on the video. You can also enable
+**Play translated audio** to have the tab speak in your chosen language
+instead of the original. The extension follows your system's light/dark mode.
 
-## Build from source
+## Virtual microphone (OBS, Discord, Zoom)
 
-```bash
-git clone <repo>
-cd VoiceBuddy
-dotnet build
-dotnet run --project src/VoiceBuddy.App
-```
+On the desktop clients you can route the translated voice into other apps as
+if it were a microphone. This needs a virtual audio cable:
 
-For a self-contained single-file release:
+* **Windows**: install [VB-CABLE](https://vb-audio.com/Cable/) (free, signed
+  by VB-Audio).
+  1. In DeepL Voice Buddy, pick **CABLE Input (VB-Audio Virtual Cable)** as
+     the output device.
+  2. In OBS / Discord / Zoom, set the microphone to **CABLE Output**.
+* **macOS**: install [BlackHole 2ch](https://existential.audio/blackhole/)
+  (free, signed).
+  1. In DeepL Voice Buddy, pick **BlackHole 2ch** as the output device.
+  2. In OBS / Zoom / Discord, set the microphone to **BlackHole 2ch**.
 
-```bash
-dotnet publish src/VoiceBuddy.App -c Release
-```
+Speak into your real mic. DeepL translates, the translated voice streams
+into the virtual cable, and other apps receive it as your microphone input.
 
-Output lands in
-`src/VoiceBuddy.App/bin/Release/net10.0-windows/win-x64/publish/VoiceBuddy.exe`.
+The Chrome extension cannot expose a virtual microphone. Browsers do not
+have that capability.
 
-Hot reload during development:
+## Settings
 
-```bash
-dotnet watch --project src/VoiceBuddy.App
-```
+| Platform | Location |
+| --- | --- |
+| Windows | `%AppData%\VoiceBuddy\settings.json` |
+| macOS | `~/Library/Application Support/VoiceBuddy/settings.json` |
+| Chrome | Browser-managed `chrome.storage.local` (per profile) |
 
----
+Desktop settings files share the same JSON schema, so you can copy one
+across machines. API keys are stored in plaintext inside a user-scoped
+directory; don't commit the file.
 
-## Debug console
+Delete the file (or clear extension storage) to reset to defaults.
 
-A dedicated **Debug** tab logs every DeepL REST + WebSocket frame for troubleshooting.
-Sample output:
+## System requirements
 
-```
-14:38:05.097  →  POST https://api.deepl.com/v3/voice/realtime  {"source_media_content_type":…}
-14:38:05.471  ←  HTTP 200  {"streaming_url":"wss://…","token":"…","session_id":"…"}
-14:38:05.472  →  ws connect  wss://api.deepl.com/v3/voice/realtime/connect
-14:38:05.814  ←  ws open  api.deepl.com
-14:38:07.096  ←  ws  {"source_transcript_update":{"concluded":[],"tentative":[{"text":" are",…}]}}
-```
+* Windows 10 version 1809 or newer, or Windows 11.
+* macOS 14.0 or newer.
+* For the extension: any Chromium-based browser from 2024 onwards (Chrome,
+  Edge, Brave, Arc, Opera).
+* An active DeepL API Pro subscription.
 
-Log is off by default (zero cost when disabled), capped at 1000 entries, auto-scrolls.
-Audio chunks (`source_media_chunk`, ~8× / second) are gated behind a separate checkbox
-because they would drown out everything else.
+## Building from source
 
----
+The three clients are independent projects:
 
-## Project layout
-
-```
-VoiceBuddy/
-├── VoiceBuddy.sln
-└── src/
-    └── VoiceBuddy.App/
-        ├── App.xaml[.cs]                  root composition, Start/StopCapture helpers
-        ├── Assets/                        logo PNG + app icon
-        ├── app.manifest                   DPI awareness
-        ├── Interop/
-        │   └── WindowNative.cs            click-through + tool-window P/Invoke
-        ├── Models/
-        │   ├── Settings.cs                persisted config model
-        │   ├── TranscriptSnapshot.cs      streaming transcript state
-        │   └── AudioDevice.cs
-        ├── Services/
-        │   ├── AudioCaptureService.cs     WASAPI loopback / mic + downmix to mono
-        │   ├── Resampler.cs               linear downsample to 16 kHz
-        │   ├── DeepLVoiceService.cs       /v3/voice/realtime + WebSocket client
-        │   ├── VoiceOutPlayer.cs          PCM playback via NAudio WasapiOut
-        │   ├── SubtitleBus.cs             in-process pub/sub
-        │   ├── SettingsStore.cs           JSON persistence under %AppData%
-        │   ├── DebugLog.cs                bounded API-traffic log
-        │   ├── TrayService.cs             NotifyIcon context menu
-        │   └── FakeSubtitleFeed.cs        test-fire sample pairs
-        └── Views/
-            ├── MainWindow.xaml[.cs]       header + tabs (Overview/Settings/Layout/Debug)
-            └── OverlayWindow.xaml[.cs]    transparent subtitle overlay
-```
-
----
-
-## Settings file
-
-Path: `%AppData%\VoiceBuddy\settings.json`.
-
-Contains overlay style, layout, position, DeepL credentials, audio device choice, and
-output-mode toggles. The API key is stored in plain text — the file is protected only
-by the OS-level permissions on your `%AppData%` folder.
-
-Delete the file to reset to defaults.
-
-**Logo drop-in:** drop a PNG at `%AppData%\VoiceBuddy\Assets\deepl-logo.png` (or
-`src/VoiceBuddy.App/Assets/deepl-logo.png` when building from source) and the app
-loads it as the header logo + taskbar icon on next launch.
-
----
+* Windows: see the project files under `src/VoiceBuddy.App/`. Requires the
+  .NET 10 SDK. Build with `dotnet build`, run with
+  `dotnet run --project src/VoiceBuddy.App`.
+* macOS: see `src/mac/VoiceBuddy/README.md`. Requires Xcode 15+ and
+  xcodegen.
+* Chrome: see `src/VoiceBuddy.Chrome/README.md`. Load unpacked from the
+  folder. No build step, no bundler.
 
 ## Known limitations
 
-- **DeepL Pro required.** DeepL Voice is not available on the Free tier at this time.
-  The Free host option remains in the UI dropdown for future compatibility, but
-  sessions against `api-free.deepl.com` will fail today.
-- **30-second DeepL inactivity timeout.** If no audio arrives for 30 seconds the
-  server closes the session. VoiceBuddy catches the close cleanly and surfaces
-  `DeepL Voice disconnected:` in the status chip — just hit Start capture again to
-  reconnect. Silence-suppression to prevent the timeout is a planned improvement.
-- **One-hour session cap** at the DeepL side. No auto-reconnect yet; restart capture.
-- **Windows only.** The UI is WPF. macOS / Linux ports would be separate codebases.
-- **Unsigned binaries.** Windows SmartScreen warns on first run ("More info → Run
-  anyway"). An EV code-signing cert is the fix but costs money and paperwork.
-- **No shipped virtual audio driver.** Virtual-mic routing relies on the user
-  installing VB-CABLE (or an equivalent).
-- **Source / target sentence alignment** when *Show original text* is on uses
-  index-pairing, which is usually 1:1 but can drift if DeepL merges or splits segments
-  differently between source and target.
-- **API key in plaintext** in `settings.json`. File lives under your `%AppData%`, which
-  is user-scoped by default, but don't commit the file.
-
----
+* **DeepL Pro is required.** The Voice API is not on the Free tier today.
+  The Free host option remains in the UI so it will keep working if DeepL
+  ever adds Free-tier access.
+* **30-second inactivity timeout.** If no audio reaches DeepL for 30
+  seconds the server closes the session. The desktop apps surface this as
+  a status message; restart capture to reconnect.
+* **1-hour session cap** on the DeepL side. There is no auto-reconnect
+  yet; restart capture.
+* **Unsigned binaries** on both Windows and macOS until the projects are
+  code-signed and notarised. Windows SmartScreen and macOS Gatekeeper will
+  warn on first launch.
+* **Chrome extension cannot capture non-browser audio.** It only sees the
+  active tab.
+* **No shipped virtual audio driver.** Virtual-mic routing relies on
+  VB-CABLE or BlackHole, which the user installs.
 
 ## License
 
