@@ -94,6 +94,19 @@
       <TabItem Header="{DynamicResource Loc_Tabs_Overview}">
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,14,0,0">
           <StackPanel MaxWidth="720" HorizontalAlignment="Left">
+            <GroupBox Header="Mode">
+              <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="ModeCaptionsRadio" GroupName="AppMode" Content="Captions"
+                             VerticalAlignment="Center" Margin="0,0,20,0"
+                             Checked="ModeRadio_Changed" />
+                <RadioButton x:Name="ModeDictationRadio" GroupName="AppMode" Content="Dictation"
+                             VerticalAlignment="Center"
+                             Checked="ModeRadio_Changed" />
+                <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="20,0,0,0" VerticalAlignment="Center"
+                           Text="Captions shows translated subtitles on the overlay. Dictation types translated text into the focused app." />
+              </StackPanel>
+            </GroupBox>
+
             <GroupBox Header="{DynamicResource Loc_Overview_AudioSource}">
               <StackPanel>
                 <StackPanel Style="{StaticResource Row}">
@@ -119,7 +132,7 @@
               </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="{DynamicResource Loc_Overview_TranslationOutput}">
+            <GroupBox x:Name="CaptionsModePanel" Header="{DynamicResource Loc_Overview_TranslationOutput}">
               <StackPanel>
                 <CheckBox x:Name="CaptionsEnabledCheck" Content="{DynamicResource Loc_Overview_CaptionsLabel}"
                           Margin="0,2,0,6"
@@ -155,6 +168,31 @@
                 </StackPanel>
                 <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
                            Text="{DynamicResource Loc_Overview_SessionHint}" />
+              </StackPanel>
+            </GroupBox>
+
+            <GroupBox x:Name="DictationModePanel" Header="Dictation" Visibility="Collapsed">
+              <StackPanel>
+                <StackPanel Style="{StaticResource Row}">
+                  <Label Style="{StaticResource RowLabel}" Content="Hotkey" />
+                  <TextBox x:Name="DictationHotkeyBox" Width="220"
+                           IsReadOnly="True"
+                           PreviewKeyDown="DictationHotkeyBox_PreviewKeyDown"
+                           GotFocus="DictationHotkeyBox_GotFocus"
+                           LostFocus="DictationHotkeyBox_LostFocus" />
+                  <Button Content="Clear" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="ClearHotkeyButton_Click" />
+                </StackPanel>
+                <TextBlock x:Name="DictationHotkeyHint" Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,0,0,6"
+                           Text="Click the field, then press your combo. Use the button and tray menu when the hotkey isn't set." />
+                <CheckBox x:Name="DictationAppendSpaceCheck" Content="Append a space after each segment"
+                          Margin="0,4,0,4"
+                          Checked="DictationAppendSpaceCheck_Changed" Unchecked="DictationAppendSpaceCheck_Changed" />
+                <StackPanel Style="{StaticResource Row}" Margin="0,8,0,0">
+                  <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Overview_Session}" />
+                  <TextBlock x:Name="DictationStatus" Foreground="{StaticResource Muted}" Text="Idle" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
+                           Text="Speak into the selected microphone; concluded translated segments get typed into the currently focused application." />
               </StackPanel>
             </GroupBox>
 

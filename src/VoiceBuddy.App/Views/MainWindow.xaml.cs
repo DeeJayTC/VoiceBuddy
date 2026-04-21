@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Forms = System.Windows.Forms;
@@ -157,6 +158,12 @@ public partial class MainWindow : Window
             VoiceOutConfig.Visibility = s.Translation.VoiceOutEnabled ? Visibility.Visible : Visibility.Collapsed;
             SelectComboByTag(VoiceGenderBox, s.Translation.VoiceGender);
             SyncVoiceOutDeviceSelection();
+
+            ModeCaptionsRadio.IsChecked = s.Mode == AppMode.Captions;
+            ModeDictationRadio.IsChecked = s.Mode == AppMode.Dictation;
+            DictationHotkeyBox.Text = s.Dictation.Hotkey;
+            DictationAppendSpaceCheck.IsChecked = s.Dictation.AppendSpace;
+            UpdateModeUi();
 
             var L = LanguageManager.Instance;
             LockButton.Content = s.OverlayLayout.Locked
@@ -460,17 +467,18 @@ public partial class MainWindow : Window
     {
         var L = LanguageManager.Instance;
         var s = App.Settings.Current;
+        var dictation = s.Mode == AppMode.Dictation;
         LockButton.Content = s.OverlayLayout.Locked
             ? L.GetString("Layout.UnlockOverlay")
             : L.GetString("Layout.LockOverlay");
         if (!App.Audio.IsRunning)
         {
-            CaptureToggleButton.Content = L.GetString("Overview.StartCapture");
+            CaptureToggleButton.Content = dictation ? "Start dictation" : L.GetString("Overview.StartCapture");
             StatusText.Text = L.GetString("Overview.Format") == "Overview.Format" ? "Idle" : "Idle"; // stays as status
         }
         else
         {
-            CaptureToggleButton.Content = L.GetString("Overview.StopCapture");
+            CaptureToggleButton.Content = dictation ? "Stop dictation" : L.GetString("Overview.StopCapture");
         }
     }
 
@@ -998,18 +1006,25 @@ public partial class MainWindow : Window
     {
         Dispatcher.BeginInvoke(() =>
         {
+            var dictation = App.Settings.Current.Mode == AppMode.Dictation;
             if (App.Audio.IsRunning)
             {
                 var fmt = App.Audio.CurrentFormat;
                 StatusText.Text = fmt is null
                     ? "Starting…"
                     : $"{fmt.SampleRate} Hz · {fmt.Channels} ch · {fmt.BitsPerSample}-bit {fmt.Encoding}";
-                CaptureToggleButton.Content = LanguageManager.Instance.GetString("Overview.StopCapture");
+                CaptureToggleButton.Content = dictation
+                    ? "Stop dictation"
+                    : LanguageManager.Instance.GetString("Overview.StopCapture");
+                if (dictation) DictationStatus.Text = "Listening…";
             }
             else
             {
                 StatusText.Text = "Idle";
-                CaptureToggleButton.Content = LanguageManager.Instance.GetString("Overview.StartCapture");
+                CaptureToggleButton.Content = dictation
+                    ? "Start dictation"
+                    : LanguageManager.Instance.GetString("Overview.StartCapture");
+                if (dictation) DictationStatus.Text = "Idle";
                 _smoothedLevel = 0;
                 VuBar.Width = 0;
             }
@@ -1057,6 +1072,101 @@ public partial class MainWindow : Window
     {
         if (App.Audio.IsRunning) App.StopCapture();
         else _ = App.StartCapture();
+    }
+
+    // --- mode + dictation ---
+
+    private void UpdateModeUi()
+    {
+        var dictation = App.Settings.Current.Mode == AppMode.Dictation;
+        CaptionsModePanel.Visibility = dictation ? Visibility.Collapsed : Visibility.Visible;
+        DictationModePanel.Visibility = dictation ? Visibility.Visible : Visibility.Collapsed;
+
+        // Mode-aware labels on the shared capture button. Running state is handled by
+        // OnCaptureStateChanged; only update when idle here so we don't overwrite a live
+        // "Stop capture" label with "Start dictation".
+        if (!App.Audio.IsRunning)
+        {
+            CaptureToggleButton.Content = dictation ? "Start dictation" : "Start capture";
+        }
+    }
+
+    private void ModeRadio_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_binding) return;
+        var newMode = ModeDictationRadio.IsChecked == true ? AppMode.Dictation : AppMode.Captions;
+        if (App.Settings.Current.Mode == newMode) return;
+
+        // Switching modes mid-session would leak audio into the wrong sink — tear down.
+        if (App.Audio.IsRunning) App.StopCapture();
+        App.Settings.Current.Mode = newMode;
+        Commit();
+        UpdateModeUi();
+    }
+
+    private void DictationHotkeyBox_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (_binding) return;
+        DictationHotkeyHint.Text = "Press your combo (Esc to cancel)…";
+    }
+
+    private void DictationHotkeyBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        DictationHotkeyHint.Text = "Click the field, then press your combo. Use the button and tray menu when the hotkey isn't set.";
+    }
+
+    private void DictationHotkeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (_binding) return;
+        e.Handled = true;
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (key == Key.Escape)
+        {
+            Keyboard.ClearFocus();
+            return;
+        }
+
+        // Only a bare modifier held down — wait for the actual key.
+        if (key is Key.LeftCtrl or Key.RightCtrl
+                or Key.LeftAlt or Key.RightAlt
+                or Key.LeftShift or Key.RightShift
+                or Key.LWin or Key.RWin) return;
+
+        var mods = Keyboard.Modifiers;
+        if (mods == ModifierKeys.None)
+        {
+            // Bare keys are too risky for a global hotkey (they'd swallow typing elsewhere).
+            DictationHotkeyHint.Text = "Add at least one modifier (Ctrl / Alt / Shift / Win).";
+            return;
+        }
+
+        var formatted = HotkeyBinding.Format(mods, key);
+        DictationHotkeyBox.Text = formatted;
+        App.Settings.Current.Dictation.Hotkey = formatted;
+        Commit();
+
+        if (App.Hotkey.LastError is { } err)
+            DictationHotkeyHint.Text = err;
+        else
+            DictationHotkeyHint.Text = $"Registered: {formatted}";
+    }
+
+    private void ClearHotkeyButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_binding) return;
+        DictationHotkeyBox.Text = "";
+        App.Settings.Current.Dictation.Hotkey = "";
+        Commit();
+        DictationHotkeyHint.Text = "Hotkey cleared. Start dictation from the button or tray.";
+    }
+
+    private void DictationAppendSpaceCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_binding) return;
+        App.Settings.Current.Dictation.AppendSpace = DictationAppendSpaceCheck.IsChecked == true;
+        Commit();
     }
 
     private void OnLevelChanged(object? sender, float rms)

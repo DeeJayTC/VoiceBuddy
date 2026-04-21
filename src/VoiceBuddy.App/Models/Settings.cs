@@ -156,12 +156,37 @@ public sealed class AudioConfig : INotifyPropertyChanged
     }
 }
 
+public enum AppMode { Captions, Dictation }
+
+public sealed class DictationConfig : INotifyPropertyChanged
+{
+    // Stored in the canonical "Ctrl+Alt+V" form produced by HotkeyBinding.Format().
+    // Empty string disables the global hotkey (button-only).
+    private string _hotkey = "Ctrl+Alt+V";
+    private bool _appendSpace = true;
+
+    public string Hotkey { get => _hotkey; set => Set(ref _hotkey, value); }
+    public bool AppendSpace { get => _appendSpace; set => Set(ref _appendSpace, value); }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void Set<T>(ref T field, T value, [CallerMemberName] string? name = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return;
+        field = value;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+}
+
 public sealed class Settings : INotifyPropertyChanged
 {
     public OverlayStyle OverlayStyle { get; init; } = new();
     public OverlayLayout OverlayLayout { get; init; } = new();
     public TranslationConfig Translation { get; init; } = new();
     public AudioConfig Audio { get; init; } = new();
+    public DictationConfig Dictation { get; init; } = new();
+
+    private AppMode _mode = AppMode.Captions;
+    public AppMode Mode { get => _mode; set { _mode = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Mode))); } }
 
     private bool _showOriginalText;
     public bool ShowOriginalText { get => _showOriginalText; set { _showOriginalText = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowOriginalText))); } }

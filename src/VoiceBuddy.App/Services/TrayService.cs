@@ -79,7 +79,9 @@ public sealed class TrayService : IDisposable
         _menu.Items.Add("Show VoiceBuddy", null, (_, _) => ShowMainWindow());
         _menu.Items.Add(new ToolStripSeparator());
 
-        var captureItem = new ToolStripMenuItem(App.Audio.IsRunning ? "Stop capture" : "Start capture");
+        var dictation = App.Settings.Current.Mode == AppMode.Dictation;
+        var verb = dictation ? "dictation" : "capture";
+        var captureItem = new ToolStripMenuItem((App.Audio.IsRunning ? "Stop " : "Start ") + verb);
         captureItem.Click += (_, _) =>
         {
             if (App.Audio.IsRunning) App.StopCapture();
