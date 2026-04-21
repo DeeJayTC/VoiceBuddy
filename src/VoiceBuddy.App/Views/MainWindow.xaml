@@ -10,11 +10,27 @@
   <Window.Resources>
     <Style TargetType="{x:Type StackPanel}" x:Key="Row">
       <Setter Property="Orientation" Value="Horizontal" />
-      <Setter Property="Margin" Value="0,0,0,6" />
+      <Setter Property="Margin" Value="0,0,0,10" />
     </Style>
     <Style TargetType="{x:Type Label}" x:Key="RowLabel">
-      <Setter Property="Width" Value="120" />
+      <Setter Property="Width" Value="126" />
+      <Setter Property="FontSize" Value="12" />
       <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="LayoutTabs" TargetType="{x:Type TabControl}" BasedOn="{StaticResource {x:Type TabControl}}">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Margin" Value="0,2,0,0" />
+    </Style>
+    <Style x:Key="LayoutTabItem" TargetType="{x:Type TabItem}" BasedOn="{StaticResource {x:Type TabItem}}">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Padding" Value="14,6" />
+    </Style>
+    <Style x:Key="PrimaryTabs" TargetType="{x:Type TabControl}" BasedOn="{StaticResource {x:Type TabControl}}">
+      <Setter Property="Margin" Value="0,2,0,0" />
+    </Style>
+    <Style x:Key="PrimaryTabItem" TargetType="{x:Type TabItem}" BasedOn="{StaticResource {x:Type TabItem}}">
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="Padding" Value="20,9" />
     </Style>
   </Window.Resources>
 
@@ -25,51 +41,68 @@
     </Grid.RowDefinitions>
 
     <!-- HEADER -->
-    <Border Grid.Row="0" Background="{StaticResource Panel}"
-            BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1">
+    <Border Grid.Row="0" BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1">
+      <Border.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+          <GradientStop Color="#1A2130" Offset="0" />
+          <GradientStop Color="#151B28" Offset="1" />
+        </LinearGradientBrush>
+      </Border.Background>
       <Grid Margin="20,14">
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
           <!-- LogoImage is shown when Assets/deepl-logo.png is present at runtime;
                Placeholder renders otherwise. Toggle happens in MainWindow.TryLoadLogo(). -->
-          <Grid Width="34" Height="34">
-            <Grid x:Name="LogoPlaceholder">
-              <Rectangle Fill="{StaticResource Accent}" RadiusX="8" RadiusY="8" />
-              <Path Data="M 8,10 L 26,10 L 26,20 L 17,20 L 13,24 L 13,20 L 8,20 Z" Fill="White" />
+          <Border Width="38" Height="38" Background="#111826" CornerRadius="10" BorderBrush="#2B354A" BorderThickness="1">
+            <Grid>
+              <Grid x:Name="LogoPlaceholder">
+                <Rectangle Fill="{StaticResource Accent}" RadiusX="8" RadiusY="8" />
+                <Path Data="M 8,10 L 26,10 L 26,20 L 17,20 L 13,24 L 13,20 L 8,20 Z" Fill="White" />
+              </Grid>
+              <Image x:Name="LogoImage" Stretch="Uniform" Visibility="Collapsed" />
             </Grid>
-            <Image x:Name="LogoImage" Stretch="Uniform" Visibility="Collapsed" />
-          </Grid>
-          <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-            <TextBlock Text="VoiceBuddy" FontSize="17" FontWeight="SemiBold" />
-            <TextBlock Text="Live subtitles powered by DeepL" FontSize="11"
-                       Foreground="{StaticResource Muted}" Margin="0,1,0,0" />
+          </Border>
+          <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+            <TextBlock Text="VoiceBuddy" FontSize="19" FontWeight="SemiBold" />
+            <TextBlock Text="{DynamicResource Loc_App_Tagline}" FontSize="11"
+                       Foreground="{StaticResource Muted}" Margin="0,2,0,0" />
           </StackPanel>
         </StackPanel>
 
         <!-- Session indicator in the header's right edge -->
-        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
-          <Ellipse x:Name="HeaderSessionDot" Width="8" Height="8" Fill="{StaticResource Muted}" VerticalAlignment="Center" />
-          <TextBlock x:Name="HeaderSessionText" Text="Idle" Margin="8,0,0,0"
-                     Foreground="{StaticResource Muted}" VerticalAlignment="Center" FontSize="12" />
-        </StackPanel>
+        <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center"
+                Background="#111826" BorderBrush="#2B354A" BorderThickness="1"
+                CornerRadius="999" Padding="12,6">
+          <StackPanel Orientation="Horizontal">
+            <Ellipse x:Name="HeaderSessionDot" Width="8" Height="8" Fill="{StaticResource Muted}" VerticalAlignment="Center" />
+            <TextBlock x:Name="HeaderSessionText" Text="Idle" Margin="8,0,0,0"
+                       Foreground="{StaticResource Muted}" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" />
+          </StackPanel>
+        </Border>
       </Grid>
     </Border>
 
     <!-- TABS -->
-    <TabControl Grid.Row="1" Margin="20,10,20,16">
+    <TabControl Grid.Row="1" Margin="20,10,20,16"
+                Style="{StaticResource PrimaryTabs}"
+                ItemContainerStyle="{StaticResource PrimaryTabItem}">
 
       <!-- OVERVIEW -->
-      <TabItem Header="Overview">
+      <TabItem Header="{DynamicResource Loc_Tabs_Overview}">
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,14,0,0">
           <StackPanel MaxWidth="720" HorizontalAlignment="Left">
-            <GroupBox Header="Audio source">
+            <GroupBox Header="{DynamicResource Loc_Overview_AudioSource}">
               <StackPanel>
                 <StackPanel Style="{StaticResource Row}">
-                  <Label Style="{StaticResource RowLabel}" Content="Device" />
+                  <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Overview_Device}" />
                   <ComboBox x:Name="DeviceBox" Width="360" SelectionChanged="DeviceBox_SelectionChanged" />
-                  <Button Content="Refresh" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="RefreshDevicesButton_Click" />
+                  <Button Content="{DynamicResource Loc_Overview_Refresh}" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="RefreshDevicesButton_Click" />
                 </StackPanel>
                 <StackPanel Style="{StaticResource Row}">
-                  <Label Style="{StaticResource RowLabel}" Content="Level" />
+                  <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Overview_Level}" />
                   <Border Width="360" Height="14" Background="#0B0D12" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="3">
                     <Grid HorizontalAlignment="Stretch">
                       <Rectangle x:Name="VuBar" Fill="{StaticResource Accent}" HorizontalAlignment="Left" Width="0" RadiusX="2" RadiusY="2" />
@@ -77,7 +110,7 @@
                   </Border>
                 </StackPanel>
                 <StackPanel Style="{StaticResource Row}">
-                  <Label Style="{StaticResource RowLabel}" Content="Format" />
+                  <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Overview_Format}" />
                   <TextBlock x:Name="StatusText" Foreground="{StaticResource Muted}" Text="Idle" VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="120,6,0,0">
@@ -86,12 +119,12 @@
               </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="Translation output">
+            <GroupBox Header="{DynamicResource Loc_Overview_TranslationOutput}">
               <StackPanel>
-                <CheckBox x:Name="CaptionsEnabledCheck" Content="Captions — show translated text in the on-screen overlay"
+                <CheckBox x:Name="CaptionsEnabledCheck" Content="{DynamicResource Loc_Overview_CaptionsLabel}"
                           Margin="0,2,0,6"
                           Checked="CaptionsEnabledCheck_Changed" Unchecked="CaptionsEnabledCheck_Changed" />
-                <CheckBox x:Name="VoiceEnabledCheck" Content="Voice — stream translated audio"
+                <CheckBox x:Name="VoiceEnabledCheck" Content="{DynamicResource Loc_Overview_VoiceLabel}"
                           Margin="0,2,0,6"
                           Checked="VoiceEnabledCheck_Changed" Unchecked="VoiceEnabledCheck_Changed" />
                 <Grid x:Name="VoiceOutConfig" Visibility="Collapsed" Margin="24,4,0,0">
@@ -101,12 +134,12 @@
                     <RowDefinition Height="Auto" />
                   </Grid.RowDefinitions>
                   <StackPanel Grid.Row="0" Style="{StaticResource Row}">
-                    <Label Style="{StaticResource RowLabel}" Content="Output device" />
+                    <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Overview_OutputDevice}" />
                     <ComboBox x:Name="VoiceOutDeviceBox" Width="320" SelectionChanged="VoiceOutDeviceBox_SelectionChanged" />
-                    <Button Content="Refresh" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="RefreshVoiceOutDevicesButton_Click" />
+                    <Button Content="{DynamicResource Loc_Overview_Refresh}" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="RefreshVoiceOutDevicesButton_Click" />
                   </StackPanel>
                   <StackPanel Grid.Row="1" Style="{StaticResource Row}">
-                    <Label Style="{StaticResource RowLabel}" Content="Voice" />
+                    <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Overview_Voice}" />
                     <ComboBox x:Name="VoiceGenderBox" Width="220" SelectionChanged="VoiceGenderBox_SelectionChanged">
                       <ComboBoxItem Content="Auto (language default)" Tag="" />
                       <ComboBoxItem Content="female" Tag="female" />
@@ -114,28 +147,28 @@
                     </ComboBox>
                   </StackPanel>
                   <TextBlock Grid.Row="2" Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
-                             Text="For OBS / Discord: install VB-CABLE (vb-audio.com/Cable), pick 'CABLE Input' as output here, then set OBS/Discord mic to 'CABLE Output'." />
+                             Text="{DynamicResource Loc_Overview_VoiceCableHint}" />
                 </Grid>
                 <StackPanel Style="{StaticResource Row}" Margin="0,8,0,0">
-                  <Label Style="{StaticResource RowLabel}" Content="Session" />
+                  <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Overview_Session}" />
                   <TextBlock x:Name="VoiceStatus" Foreground="{StaticResource Muted}" Text="Idle" VerticalAlignment="Center" />
                 </StackPanel>
                 <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
-                           Text="A DeepL Voice session opens when you start capture. Configure your API key and target language on the Settings tab." />
+                           Text="{DynamicResource Loc_Overview_SessionHint}" />
               </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="Testing">
+            <GroupBox Header="{DynamicResource Loc_Overview_Testing}">
               <StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                  <Button Content="Fire test subtitle" Click="TestFireButton_Click" />
+                  <Button Content="{DynamicResource Loc_Overview_FireTestSubtitle}" Click="TestFireButton_Click" />
                   <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="12,0,0,0" VerticalAlignment="Center"
-                             Text="Pushes a fake German→English subtitle into the overlay. Useful for tuning styling without burning a live session." />
+                             Text="{DynamicResource Loc_Overview_FireTestHint}" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,2">
-                  <Button Content="Clear captions" Click="ClearCaptionsButton_Click" />
+                  <Button Content="{DynamicResource Loc_Overview_ClearCaptions}" Click="ClearCaptionsButton_Click" />
                   <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="12,0,0,0" VerticalAlignment="Center"
-                             Text="Wipes the overlay immediately." />
+                             Text="{DynamicResource Loc_Overview_ClearCaptionsHint}" />
                 </StackPanel>
               </StackPanel>
             </GroupBox>
@@ -144,13 +177,13 @@
       </TabItem>
 
       <!-- SETTINGS -->
-      <TabItem Header="Settings">
+      <TabItem Header="{DynamicResource Loc_Tabs_Settings}">
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,14,0,0">
           <StackPanel MaxWidth="720" HorizontalAlignment="Left">
-            <GroupBox Header="DeepL Voice credentials">
+            <GroupBox Header="{DynamicResource Loc_Settings_DeepLVoiceCredentials}">
               <StackPanel>
                 <StackPanel Style="{StaticResource Row}">
-                  <Label Style="{StaticResource RowLabel}" Content="Target lang" />
+                  <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Settings_TargetLang}" />
                   <ComboBox x:Name="TargetLangBox" Width="260"
                             IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
                             TextSearch.TextPath="Label"
@@ -163,10 +196,10 @@
                     </ComboBox.ItemTemplate>
                   </ComboBox>
                   <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="10,0,0,0" VerticalAlignment="Center"
-                             Text="Type to filter. Only DeepL-supported values are accepted." />
+                             Text="{DynamicResource Loc_Settings_TargetLangHint}" />
                 </StackPanel>
                 <StackPanel Style="{StaticResource Row}">
-                  <Label Style="{StaticResource RowLabel}" Content="Source lang" />
+                  <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Settings_SourceLang}" />
                   <ComboBox x:Name="SourceLangBox" Width="260"
                             IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
                             TextSearch.TextPath="Label"
@@ -179,29 +212,41 @@
                     </ComboBox.ItemTemplate>
                   </ComboBox>
                   <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="10,0,0,0" VerticalAlignment="Center"
-                             Text="'Auto' lets DeepL detect the source." />
+                             Text="{DynamicResource Loc_Settings_SourceLangHint}" />
                 </StackPanel>
                 <StackPanel Style="{StaticResource Row}">
-                  <Label Style="{StaticResource RowLabel}" Content="Host" />
+                  <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Settings_Host}" />
                   <ComboBox x:Name="HostBox" Width="260" SelectionChanged="HostBox_SelectionChanged">
                     <ComboBoxItem Content="api-free.deepl.com" />
                     <ComboBoxItem Content="api.deepl.com" />
                   </ComboBox>
                 </StackPanel>
                 <StackPanel Style="{StaticResource Row}">
-                  <Label Style="{StaticResource RowLabel}" Content="API key" />
+                  <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Settings_ApiKey}" />
                   <PasswordBox x:Name="ApiKeyBox" Width="360" PasswordChanged="ApiKeyBox_PasswordChanged" />
                 </StackPanel>
                 <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,4,0,0"
-                           Text="Key is stored locally under %AppData%\VoiceBuddy\settings.json. Transmitted only to the configured DeepL host." />
+                           Text="{DynamicResource Loc_Settings_ApiKeyHint}" />
               </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="Subtitle behavior">
+            <GroupBox Header="{DynamicResource Loc_Settings_SubtitleBehavior}">
               <StackPanel>
-                <CheckBox x:Name="ShowOriginalCheck" Content="Show original text under subtitle"
+                <CheckBox x:Name="ShowOriginalCheck" Content="{DynamicResource Loc_Settings_ShowOriginal}"
                           Margin="0,2,0,4"
                           Checked="ShowOriginalCheck_Changed" Unchecked="ShowOriginalCheck_Changed" />
+              </StackPanel>
+            </GroupBox>
+
+            <GroupBox Header="{DynamicResource Loc_Settings_AppLanguage}">
+              <StackPanel>
+                <StackPanel Style="{StaticResource Row}">
+                  <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Settings_Language}" />
+                  <ComboBox x:Name="LanguageBox" Width="260"
+                            SelectionChanged="LanguageBox_SelectionChanged" />
+                </StackPanel>
+                <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,4,0,0"
+                           Text="{DynamicResource Loc_Settings_AppLanguageHint}" />
               </StackPanel>
             </GroupBox>
           </StackPanel>
@@ -209,7 +254,7 @@
       </TabItem>
 
       <!-- DEBUG -->
-      <TabItem Header="Debug">
+      <TabItem Header="{DynamicResource Loc_Tabs_Debug}">
         <Grid Margin="0,14,0,0">
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -219,14 +264,14 @@
           <Border Grid.Row="0" Background="{StaticResource Panel}"
                   BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="10" Padding="12,10">
             <StackPanel Orientation="Horizontal">
-              <CheckBox x:Name="DebugEnabledCheck" Content="Log API traffic" VerticalAlignment="Center"
+              <CheckBox x:Name="DebugEnabledCheck" Content="{DynamicResource Loc_Debug_LogApiTraffic}" VerticalAlignment="Center"
                         Checked="DebugEnabledCheck_Changed" Unchecked="DebugEnabledCheck_Changed" />
-              <CheckBox x:Name="DebugChunksCheck" Content="Include audio chunks (noisy, ~8/s)" VerticalAlignment="Center"
+              <CheckBox x:Name="DebugChunksCheck" Content="{DynamicResource Loc_Debug_IncludeAudioChunks}" VerticalAlignment="Center"
                         Margin="16,0,0,0"
                         Checked="DebugChunksCheck_Changed" Unchecked="DebugChunksCheck_Changed" />
-              <CheckBox x:Name="DebugAutoScrollCheck" Content="Auto-scroll" IsChecked="True" VerticalAlignment="Center"
+              <CheckBox x:Name="DebugAutoScrollCheck" Content="{DynamicResource Loc_Debug_AutoScroll}" IsChecked="True" VerticalAlignment="Center"
                         Margin="16,0,0,0" />
-              <Button Content="Clear" Style="{StaticResource SecondaryButton}" Margin="16,0,0,0"
+              <Button Content="{DynamicResource Loc_Debug_Clear}" Style="{StaticResource SecondaryButton}" Margin="16,0,0,0"
                       Click="DebugClearButton_Click" />
               <TextBlock x:Name="DebugStats" Foreground="{StaticResource Muted}" FontSize="11"
                          VerticalAlignment="Center" Margin="16,0,0,0" Text="0 entries" />
@@ -250,7 +295,7 @@
       </TabItem>
 
       <!-- LAYOUT -->
-      <TabItem Header="Layout">
+      <TabItem Header="{DynamicResource Loc_Tabs_Layout}">
         <Grid Margin="0,14,0,0">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -263,133 +308,147 @@
                   BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="10" Padding="14">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
               <StackPanel>
-                <TextBlock Style="{StaticResource SectionTitle}" Text="SUBTITLE STYLE" />
+                <TextBlock Style="{StaticResource SectionTitle}" Text="{DynamicResource Loc_Layout_SubtitleStyle}" />
 
-                <GroupBox Header="Text">
-                  <StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Font family" />
-                      <TextBox x:Name="FontFamilyBox" Width="260" TextChanged="FontFamilyBox_TextChanged" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Size" />
-                      <Slider x:Name="FontSizeSlider" Minimum="12" Maximum="72" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="FontSizeSlider_ValueChanged" />
-                      <TextBlock x:Name="FontSizeValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Weight" />
-                      <ComboBox x:Name="WeightBox" Width="120" SelectionChanged="WeightBox_SelectionChanged">
-                        <ComboBoxItem Content="400" />
-                        <ComboBoxItem Content="500" />
-                        <ComboBoxItem Content="600" />
-                        <ComboBoxItem Content="700" />
-                        <ComboBoxItem Content="800" />
-                      </ComboBox>
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Align" />
-                      <ComboBox x:Name="AlignBox" Width="120" SelectionChanged="AlignBox_SelectionChanged">
-                        <ComboBoxItem Content="Left" />
-                        <ComboBoxItem Content="Center" />
-                        <ComboBoxItem Content="Right" />
-                      </ComboBox>
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Color" />
-                      <TextBox x:Name="TextColorBox" Width="120" TextChanged="TextColorBox_TextChanged" />
-                      <Border x:Name="TextColorSwatch" Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" BorderThickness="1" BorderBrush="{StaticResource Border}" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Line height" />
-                      <Slider x:Name="LineHeightSlider" Minimum="0.8" Maximum="2.0" Width="220" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="LineHeightSlider_ValueChanged" />
-                      <TextBlock x:Name="LineHeightValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                  </StackPanel>
-                </GroupBox>
+                <TabControl Style="{StaticResource LayoutTabs}" ItemContainerStyle="{StaticResource LayoutTabItem}">
+                  <TabItem Header="{DynamicResource Loc_Layout_Typography}">
+                    <StackPanel Margin="0,10,0,0">
+                      <Border Background="#111826" CornerRadius="10" Padding="12" Margin="0,0,0,10">
+                        <StackPanel>
+                          <StackPanel Style="{StaticResource Row}">
+                            <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_FontFamily}" />
+                            <TextBox x:Name="FontFamilyBox" Width="260" TextChanged="FontFamilyBox_TextChanged" />
+                          </StackPanel>
+                          <StackPanel Style="{StaticResource Row}">
+                            <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_Size}" />
+                            <Slider x:Name="FontSizeSlider" Minimum="12" Maximum="72" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="FontSizeSlider_ValueChanged" />
+                            <TextBlock x:Name="FontSizeValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                          </StackPanel>
+                          <StackPanel Style="{StaticResource Row}">
+                            <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_Weight}" />
+                            <ComboBox x:Name="WeightBox" Width="120" SelectionChanged="WeightBox_SelectionChanged">
+                              <ComboBoxItem Content="400" />
+                              <ComboBoxItem Content="500" />
+                              <ComboBoxItem Content="600" />
+                              <ComboBoxItem Content="700" />
+                              <ComboBoxItem Content="800" />
+                            </ComboBox>
+                          </StackPanel>
+                          <StackPanel Style="{StaticResource Row}">
+                            <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_Align}" />
+                            <ComboBox x:Name="AlignBox" Width="120" SelectionChanged="AlignBox_SelectionChanged">
+                              <ComboBoxItem Content="Left" />
+                              <ComboBoxItem Content="Center" />
+                              <ComboBoxItem Content="Right" />
+                            </ComboBox>
+                          </StackPanel>
+                          <StackPanel Style="{StaticResource Row}">
+                            <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_Color}" />
+                            <TextBox x:Name="TextColorBox" Width="90" TextChanged="TextColorBox_TextChanged" />
+                            <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Loc_Layout_Pick}" Margin="8,0,0,0" Padding="10,4" Click="TextColorPickButton_Click" />
+                            <Border x:Name="TextColorSwatch" Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" BorderThickness="1" BorderBrush="{StaticResource Border}" />
+                          </StackPanel>
+                          <StackPanel Style="{StaticResource Row}">
+                            <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_LineHeight}" />
+                            <Slider x:Name="LineHeightSlider" Minimum="0.8" Maximum="2.0" Width="220" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="LineHeightSlider_ValueChanged" />
+                            <TextBlock x:Name="LineHeightValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                          </StackPanel>
+                        </StackPanel>
+                      </Border>
 
-                <GroupBox Header="Panel background">
-                  <StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Panel color" />
-                      <TextBox x:Name="PanelBgColorBox" Width="120" TextChanged="PanelBgColorBox_TextChanged" />
-                      <Border x:Name="PanelBgColorSwatch" Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" BorderThickness="1" BorderBrush="{StaticResource Border}" />
+                      <Border Background="#111826" CornerRadius="10" Padding="12">
+                        <StackPanel>
+                          <StackPanel Style="{StaticResource Row}">
+                            <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_PanelColor}" />
+                            <TextBox x:Name="PanelBgColorBox" Width="90" TextChanged="PanelBgColorBox_TextChanged" />
+                            <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Loc_Layout_Pick}" Margin="8,0,0,0" Padding="10,4" Click="PanelBgColorPickButton_Click" />
+                            <Border x:Name="PanelBgColorSwatch" Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" BorderThickness="1" BorderBrush="{StaticResource Border}" />
+                          </StackPanel>
+                          <StackPanel Style="{StaticResource Row}">
+                            <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_PanelOpacity}" />
+                            <Slider x:Name="PanelBgOpacitySlider" Minimum="0" Maximum="1" Width="220" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="PanelBgOpacitySlider_ValueChanged" />
+                            <TextBlock x:Name="PanelBgOpacityValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                          </StackPanel>
+                          <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
+                                     Text="{DynamicResource Loc_Layout_PanelOpacityHint}" />
+                        </StackPanel>
+                      </Border>
                     </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Panel opacity" />
-                      <Slider x:Name="PanelBgOpacitySlider" Minimum="0" Maximum="1" Width="220" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="PanelBgOpacitySlider_ValueChanged" />
-                      <TextBlock x:Name="PanelBgOpacityValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
-                               Text="Fills the entire overlay area behind the subtitle bubbles. Set opacity to 0 for a transparent overlay." />
-                  </StackPanel>
-                </GroupBox>
+                  </TabItem>
 
-                <GroupBox Header="Outline &amp; background">
-                  <StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Outline color" />
-                      <TextBox x:Name="OutlineColorBox" Width="120" TextChanged="OutlineColorBox_TextChanged" />
-                      <Border x:Name="OutlineColorSwatch" Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" BorderThickness="1" BorderBrush="{StaticResource Border}" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Outline width" />
-                      <Slider x:Name="OutlineWidthSlider" Minimum="0" Maximum="8" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="OutlineWidthSlider_ValueChanged" />
-                      <TextBlock x:Name="OutlineWidthValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Background" />
-                      <TextBox x:Name="BgColorBox" Width="120" TextChanged="BgColorBox_TextChanged" />
-                      <Border x:Name="BgColorSwatch" Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" BorderThickness="1" BorderBrush="{StaticResource Border}" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="BG opacity" />
-                      <Slider x:Name="BgOpacitySlider" Minimum="0" Maximum="1" Width="220" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="BgOpacitySlider_ValueChanged" />
-                      <TextBlock x:Name="BgOpacityValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Padding X" />
-                      <Slider x:Name="PadXSlider" Minimum="0" Maximum="40" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="PadXSlider_ValueChanged" />
-                      <TextBlock x:Name="PadXValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Padding Y" />
-                      <Slider x:Name="PadYSlider" Minimum="0" Maximum="40" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="PadYSlider_ValueChanged" />
-                      <TextBlock x:Name="PadYValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Radius" />
-                      <Slider x:Name="RadiusSlider" Minimum="0" Maximum="32" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="RadiusSlider_ValueChanged" />
-                      <TextBlock x:Name="RadiusValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Max lines" />
-                      <Slider x:Name="MaxLinesSlider" Minimum="1" Maximum="6" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="MaxLinesSlider_ValueChanged" />
-                      <TextBlock x:Name="MaxLinesValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Visible sentences" />
-                      <Slider x:Name="MaxSentencesSlider" Minimum="1" Maximum="15" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="MaxSentencesSlider_ValueChanged" />
-                      <TextBlock x:Name="MaxSentencesValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                  </StackPanel>
-                </GroupBox>
+                  <TabItem Header="{DynamicResource Loc_Layout_Bubble}">
+                    <Border Background="#111826" CornerRadius="10" Padding="12" Margin="0,10,0,0">
+                      <StackPanel>
+                        <StackPanel Style="{StaticResource Row}">
+                          <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_OutlineColor}" />
+                          <TextBox x:Name="OutlineColorBox" Width="90" TextChanged="OutlineColorBox_TextChanged" />
+                            <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Loc_Layout_Pick}" Margin="8,0,0,0" Padding="10,4" Click="OutlineColorPickButton_Click" />
+                          <Border x:Name="OutlineColorSwatch" Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" BorderThickness="1" BorderBrush="{StaticResource Border}" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource Row}">
+                          <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_OutlineWidth}" />
+                          <Slider x:Name="OutlineWidthSlider" Minimum="0" Maximum="8" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="OutlineWidthSlider_ValueChanged" />
+                          <TextBlock x:Name="OutlineWidthValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource Row}">
+                          <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_Background}" />
+                          <TextBox x:Name="BgColorBox" Width="90" TextChanged="BgColorBox_TextChanged" />
+                            <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Loc_Layout_Pick}" Margin="8,0,0,0" Padding="10,4" Click="BgColorPickButton_Click" />
+                          <Border x:Name="BgColorSwatch" Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" BorderThickness="1" BorderBrush="{StaticResource Border}" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource Row}">
+                          <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_BgOpacity}" />
+                          <Slider x:Name="BgOpacitySlider" Minimum="0" Maximum="1" Width="220" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="BgOpacitySlider_ValueChanged" />
+                          <TextBlock x:Name="BgOpacityValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource Row}">
+                          <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_PaddingX}" />
+                          <Slider x:Name="PadXSlider" Minimum="0" Maximum="40" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="PadXSlider_ValueChanged" />
+                          <TextBlock x:Name="PadXValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource Row}">
+                          <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_PaddingY}" />
+                          <Slider x:Name="PadYSlider" Minimum="0" Maximum="40" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="PadYSlider_ValueChanged" />
+                          <TextBlock x:Name="PadYValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource Row}">
+                          <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_Radius}" />
+                          <Slider x:Name="RadiusSlider" Minimum="0" Maximum="32" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="RadiusSlider_ValueChanged" />
+                          <TextBlock x:Name="RadiusValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource Row}">
+                          <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_MaxLines}" />
+                          <Slider x:Name="MaxLinesSlider" Minimum="1" Maximum="6" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="MaxLinesSlider_ValueChanged" />
+                          <TextBlock x:Name="MaxLinesValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource Row}">
+                          <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_VisibleSentences}" />
+                          <Slider x:Name="MaxSentencesSlider" Minimum="1" Maximum="15" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="MaxSentencesSlider_ValueChanged" />
+                          <TextBlock x:Name="MaxSentencesValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                        </StackPanel>
+                      </StackPanel>
+                    </Border>
+                  </TabItem>
 
-                <GroupBox Header="Timing">
-                  <StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="New sentence (s)" />
-                      <Slider x:Name="NewSentenceSecondsSlider" Minimum="1" Maximum="20" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="NewSentenceSecondsSlider_ValueChanged" />
-                      <TextBlock x:Name="NewSentenceSecondsValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Clear after (s)" />
-                      <Slider x:Name="ClearAfterSecondsSlider" Minimum="5" Maximum="120" Width="220" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="ClearAfterSecondsSlider_ValueChanged" />
-                      <TextBlock x:Name="ClearAfterSecondsValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
-                               Text="Silence past 'new sentence' splits the current utterance into its own bubble. Silence past 'clear after' wipes the overlay entirely." />
-                  </StackPanel>
-                </GroupBox>
+                  <TabItem Header="{DynamicResource Loc_Layout_Timing}">
+                    <Border Background="#111826" CornerRadius="10" Padding="12" Margin="0,10,0,0">
+                      <StackPanel>
+                        <StackPanel Style="{StaticResource Row}">
+                          <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_NewSentence}" />
+                          <Slider x:Name="NewSentenceSecondsSlider" Minimum="1" Maximum="20" Width="220" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="NewSentenceSecondsSlider_ValueChanged" />
+                          <TextBlock x:Name="NewSentenceSecondsValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource Row}">
+                          <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_ClearAfter}" />
+                          <Slider x:Name="ClearAfterSecondsSlider" Minimum="5" Maximum="120" Width="220" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="ClearAfterSecondsSlider_ValueChanged" />
+                          <TextBlock x:Name="ClearAfterSecondsValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
+                                   Text="{DynamicResource Loc_Layout_ClearAfterHint}" />
+                      </StackPanel>
+                    </Border>
+                  </TabItem>
+                </TabControl>
               </StackPanel>
             </ScrollViewer>
           </Border>
@@ -400,16 +459,16 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto">
               <StackPanel>
                 <Grid Margin="0,0,0,8">
-                  <TextBlock Style="{StaticResource SectionTitle}" Text="PREVIEW" Margin="0" VerticalAlignment="Center" />
+                  <TextBlock Style="{StaticResource SectionTitle}" Text="{DynamicResource Loc_Layout_Preview}" Margin="0" VerticalAlignment="Center" />
                   <Button x:Name="LockButton" Style="{StaticResource SecondaryButton}" Content="Lock overlay (click-through)"
                           HorizontalAlignment="Right" Click="LockButton_Click" Padding="10,4" />
                 </Grid>
 
-                <CheckBox x:Name="ObsCaptureModeCheck" Content="OBS capture mode (show overlay in window pickers)"
+                <CheckBox x:Name="ObsCaptureModeCheck" Content="{DynamicResource Loc_Layout_ObsCaptureMode}"
                           Margin="0,0,0,2"
                           Checked="ObsCaptureModeCheck_Changed" Unchecked="ObsCaptureModeCheck_Changed" />
                 <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="22,0,0,8"
-                           Text="Exposes the overlay to OBS as 'VoiceBuddy — Subtitles'. In OBS Window Capture, set Capture Method to 'Windows 10 (1903 and up)' to preserve transparency." />
+                           Text="{DynamicResource Loc_Layout_ObsCaptureModeHint}" />
 
                 <Border x:Name="PreviewSurface" Height="240" CornerRadius="8" BorderBrush="{StaticResource Border}" BorderThickness="1" ClipToBounds="True">
                   <Border.Background>
@@ -428,50 +487,64 @@
                   </Grid>
                 </Border>
 
-                <GroupBox Header="Position" Margin="0,12,0,0">
+                <GroupBox Header="{DynamicResource Loc_Layout_Position}" Margin="0,12,0,0">
                   <StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Anchor" />
-                      <ComboBox x:Name="AnchorBox" Width="180" SelectionChanged="AnchorBox_SelectionChanged">
-                        <ComboBoxItem Content="TopLeft" />
-                        <ComboBoxItem Content="TopCenter" />
-                        <ComboBoxItem Content="TopRight" />
-                        <ComboBoxItem Content="CenterLeft" />
-                        <ComboBoxItem Content="Center" />
-                        <ComboBoxItem Content="CenterRight" />
-                        <ComboBoxItem Content="BottomLeft" />
-                        <ComboBoxItem Content="BottomCenter" />
-                        <ComboBoxItem Content="BottomRight" />
-                      </ComboBox>
+                    <CheckBox x:Name="FreeformModeCheck" Content="{DynamicResource Loc_Layout_FreeformMode}"
+                              Margin="0,0,0,8"
+                              Checked="FreeformModeCheck_Changed" Unchecked="FreeformModeCheck_Changed" />
+
+                    <StackPanel x:Name="AnchoredPositionPanel">
+                      <StackPanel Style="{StaticResource Row}">
+                        <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_Anchor}" />
+                        <ComboBox x:Name="AnchorBox" Width="180" SelectionChanged="AnchorBox_SelectionChanged">
+                          <ComboBoxItem Content="TopLeft" />
+                          <ComboBoxItem Content="TopCenter" />
+                          <ComboBoxItem Content="TopRight" />
+                          <ComboBoxItem Content="CenterLeft" />
+                          <ComboBoxItem Content="Center" />
+                          <ComboBoxItem Content="CenterRight" />
+                          <ComboBoxItem Content="BottomLeft" />
+                          <ComboBoxItem Content="BottomCenter" />
+                          <ComboBoxItem Content="BottomRight" />
+                        </ComboBox>
+                      </StackPanel>
+                      <StackPanel Style="{StaticResource Row}">
+                        <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_OffsetX}" />
+                        <Slider x:Name="OffsetXSlider" Minimum="-500" Maximum="500" Width="220" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="OffsetXSlider_ValueChanged" />
+                        <TextBlock x:Name="OffsetXValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                      </StackPanel>
+                      <StackPanel Style="{StaticResource Row}">
+                        <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_OffsetY}" />
+                        <Slider x:Name="OffsetYSlider" Minimum="-500" Maximum="500" Width="220" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="OffsetYSlider_ValueChanged" />
+                        <TextBlock x:Name="OffsetYValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+                      </StackPanel>
+                      <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,8"
+                                 Text="{DynamicResource Loc_Layout_AnchoredModeHint}" />
                     </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Offset X" />
-                      <Slider x:Name="OffsetXSlider" Minimum="-500" Maximum="500" Width="220" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="OffsetXSlider_ValueChanged" />
-                      <TextBlock x:Name="OffsetXValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
+
+                    <StackPanel x:Name="FreeformPositionPanel" Visibility="Collapsed" Margin="0,0,0,8">
+                      <StackPanel Style="{StaticResource Row}">
+                        <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_Mode}" />
+                        <TextBlock x:Name="ModeReadout" Text="Free" Foreground="{StaticResource Muted}" VerticalAlignment="Center" />
+                        <Button x:Name="ResetAnchorButton" Content="{DynamicResource Loc_Layout_ResetToAnchor}" Style="{StaticResource SecondaryButton}"
+                                Margin="12,0,0,0" Click="ResetAnchorButton_Click" />
+                      </StackPanel>
+                      <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
+                                 Text="{DynamicResource Loc_Layout_FreeformModeHint}" />
                     </StackPanel>
+
                     <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Offset Y" />
-                      <Slider x:Name="OffsetYSlider" Minimum="-500" Maximum="500" Width="220" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="OffsetYSlider_ValueChanged" />
-                      <TextBlock x:Name="OffsetYValue" Width="40" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Width" />
+                      <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_Width}" />
                       <Slider x:Name="WidthSlider" Minimum="320" Maximum="1920" Width="220" TickFrequency="20" IsSnapToTickEnabled="True" ValueChanged="WidthSlider_ValueChanged" />
                       <TextBlock x:Name="WidthValue" Width="50" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
                     </StackPanel>
                     <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Height" />
+                      <Label Style="{StaticResource RowLabel}" Content="{DynamicResource Loc_Layout_Height}" />
                       <Slider x:Name="HeightSlider" Minimum="80" Maximum="1080" Width="220" TickFrequency="10" IsSnapToTickEnabled="True" ValueChanged="HeightSlider_ValueChanged" />
                       <TextBlock x:Name="HeightValue" Width="50" TextAlignment="Right" Foreground="{StaticResource Muted}" Margin="8,0,0,0" />
                     </StackPanel>
-                    <StackPanel Style="{StaticResource Row}">
-                      <Label Style="{StaticResource RowLabel}" Content="Mode" />
-                      <TextBlock x:Name="ModeReadout" Text="Anchored" Foreground="{StaticResource Muted}" VerticalAlignment="Center" />
-                      <Button x:Name="ResetAnchorButton" Content="Reset to anchor" Style="{StaticResource SecondaryButton}"
-                              Margin="12,0,0,0" Click="ResetAnchorButton_Click" />
-                    </StackPanel>
                     <TextBlock Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="120,2,0,0"
-                               Text="Unlock and drag the overlay anywhere (including other screens). Changing Anchor/Offset snaps back to anchored." />
+                               Text="{DynamicResource Loc_Layout_DimensionHint}" />
                   </StackPanel>
                 </GroupBox>
 

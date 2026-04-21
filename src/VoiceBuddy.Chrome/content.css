@@ -1,0 +1,44 @@
+/* All positioning is done inline from content.js — this file only styles
+   the visual appearance. The overlay reads settings-driven values from
+   CSS custom properties on the root, so options changes live-update
+   without needing a style rewrite. */
+
+#voicebuddy-overlay-root {
+  position: fixed;
+  z-index: 2147483647;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --vb-font-size: 28px;
+  --vb-bg-opacity: 0.55;
+  --vb-text-color: #ffffff;
+  --vb-bg-color: 0, 0, 0;
+}
+
+#voicebuddy-overlay-root .vb-line {
+  background: rgba(var(--vb-bg-color), var(--vb-bg-opacity));
+  color: var(--vb-text-color);
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+  font-size: var(--vb-font-size);
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+#voicebuddy-overlay-root .vb-line.vb-tentative {
+  opacity: 0.78;
+  font-weight: 500;
+}
+
+#voicebuddy-overlay-root .vb-line.vb-source {
+  font-size: calc(var(--vb-font-size) * 0.72);
+  opacity: 0.72;
+  font-weight: 400;
+}

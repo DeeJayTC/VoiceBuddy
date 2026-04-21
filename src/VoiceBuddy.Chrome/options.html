@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>DeepL Voice Buddy — Settings</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    body { max-width: 640px; margin: 40px auto; padding: 0 24px 80px; font-size: 14px; }
+    .brand-header { margin-bottom: 4px; }
+    .brand-title { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+    .lede { color: var(--text-muted); margin: 0 0 28px; font-size: 13px; }
+    h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--text-muted); margin: 32px 0 8px; }
+    label.section-field { display: block; margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--text); }
+    .hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+    .row { display: flex; gap: 14px; align-items: flex-end; }
+    .row > * { flex: 1; }
+    .val { font-weight: 600; color: var(--text); margin-left: 6px; font-variant-numeric: tabular-nums; }
+    button.primary { width: auto; padding: 10px 24px; }
+    .button-row { margin-top: 28px; display: flex; align-items: center; gap: 14px; }
+    .saved { color: #6fbb90; font-size: 13px; opacity: 0; transition: opacity .2s; }
+    @media (prefers-color-scheme: light) { .saved { color: #1f7a4d; } }
+    .saved.visible { opacity: 1; }
+    hr.divider { margin: 32px 0 0; }
+    input[type="range"] { margin-top: 8px; }
+    input, select { margin-top: 6px; padding: 9px 11px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="brand-header">
+    <span class="logo-badge"><img src="icons/icon32.png" alt="" /></span>
+    <h1 class="brand-title"><span class="brand-accent">DeepL</span> Voice Buddy</h1>
+  </div>
+  <p class="lede">
+    Bring your own DeepL API key. Get one at
+    <a href="https://www.deepl.com/pro-api" target="_blank" rel="noopener">deepl.com/pro-api</a>.
+  </p>
+
+  <h2>DeepL</h2>
+  <label class="section-field" for="apiKey">API key</label>
+  <input type="password" id="apiKey" placeholder="DeepL-Auth-Key value" autocomplete="off" />
+  <div class="hint">Stored locally in your browser; only sent to DeepL.</div>
+
+  <label class="section-field" for="apiHost">API host</label>
+  <select id="apiHost">
+    <option value="api-free.deepl.com">api-free.deepl.com (free tier)</option>
+    <option value="api.deepl.com">api.deepl.com (pro tier)</option>
+  </select>
+
+  <hr class="divider" />
+  <h2>Captions</h2>
+
+  <label class="section-field" for="captionAnchor">Anchor to</label>
+  <select id="captionAnchor">
+    <option value="video">Video element (YouTube, Twitch, Meet, …)</option>
+    <option value="page">Browser viewport</option>
+  </select>
+  <div class="hint">Video mode pins captions to the largest visible &lt;video&gt; on the page and falls back to the viewport if none is found.</div>
+
+  <div class="row">
+    <div>
+      <label class="section-field" for="captionPosition">Position</label>
+      <select id="captionPosition">
+        <option value="bottom">Bottom</option>
+        <option value="top">Top</option>
+      </select>
+    </div>
+    <div>
+      <label class="section-field" for="captionOffset">Offset (px) <span class="val" id="captionOffsetVal"></span></label>
+      <input type="range" id="captionOffset" min="0" max="300" step="4" />
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label class="section-field" for="captionFontSize">Font size (px) <span class="val" id="captionFontSizeVal"></span></label>
+      <input type="range" id="captionFontSize" min="12" max="64" step="1" />
+    </div>
+    <div>
+      <label class="section-field" for="captionBgOpacity">Background opacity <span class="val" id="captionBgOpacityVal"></span></label>
+      <input type="range" id="captionBgOpacity" min="0" max="100" step="5" />
+    </div>
+  </div>
+
+  <label class="section-field" for="captionMaxWidthPct">Max width (% of anchor) <span class="val" id="captionMaxWidthPctVal"></span></label>
+  <input type="range" id="captionMaxWidthPct" min="30" max="100" step="5" />
+
+  <div class="button-row">
+    <button id="save" class="primary">Save</button>
+    <span class="saved" id="saved">Saved.</span>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

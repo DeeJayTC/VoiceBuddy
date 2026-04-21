@@ -166,5 +166,8 @@ public sealed class Settings : INotifyPropertyChanged
     private bool _showOriginalText;
     public bool ShowOriginalText { get => _showOriginalText; set { _showOriginalText = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowOriginalText))); } }
 
+    private string _uiLanguage = "en";
+    public string UILanguage { get => _uiLanguage; set { _uiLanguage = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UILanguage))); } }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 }

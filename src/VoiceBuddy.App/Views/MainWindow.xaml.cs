@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Forms = System.Windows.Forms;
 using VoiceBuddy.Models;
 using VoiceBuddy.Services;
 
@@ -135,16 +136,21 @@ public partial class MainWindow : Window
             HeightSlider.Value = s.OverlayLayout.Height;
             HeightValue.Text = s.OverlayLayout.Height.ToString(CultureInfo.InvariantCulture);
 
+            FreeformModeCheck.IsChecked = s.OverlayLayout.Mode == OverlayMode.Free;
             ModeReadout.Text = s.OverlayLayout.Mode == OverlayMode.Free
                 ? $"Free ({(int)s.OverlayLayout.FreeLeft}, {(int)s.OverlayLayout.FreeTop})"
                 : "Anchored";
             ResetAnchorButton.IsEnabled = s.OverlayLayout.Mode == OverlayMode.Free;
+            UpdatePositionModeUi();
 
             SelectLanguageByCode(TargetLangBox, s.Translation.TargetLang);
             SelectLanguageByCode(SourceLangBox, s.Translation.SourceLang);
             SelectComboByContent(HostBox, s.Translation.DeepLApiHost);
             ApiKeyBox.Password = s.Translation.DeepLApiKey;
             ShowOriginalCheck.IsChecked = s.ShowOriginalText;
+            
+            // Set application language
+            LanguageBox.SelectedItem = s.UILanguage;
 
             CaptionsEnabledCheck.IsChecked = s.Translation.CaptionsEnabled;
             VoiceEnabledCheck.IsChecked = s.Translation.VoiceOutEnabled;
@@ -152,7 +158,10 @@ public partial class MainWindow : Window
             SelectComboByTag(VoiceGenderBox, s.Translation.VoiceGender);
             SyncVoiceOutDeviceSelection();
 
-            LockButton.Content = s.OverlayLayout.Locked ? "Unlock overlay" : "Lock overlay (click-through)";
+            var L = LanguageManager.Instance;
+            LockButton.Content = s.OverlayLayout.Locked
+                ? L.GetString("Layout.UnlockOverlay")
+                : L.GetString("Layout.LockOverlay");
             ObsCaptureModeCheck.IsChecked = s.OverlayLayout.ObsCaptureMode;
 
             UpdatePreview();
@@ -391,6 +400,95 @@ public partial class MainWindow : Window
         Commit();
     }
 
+    private static bool TryPickHexColor(string currentHex, out string pickedHex)
+    {
+        pickedHex = currentHex;
+        var dlg = new Forms.ColorDialog
+        {
+            FullOpen = true,
+            AnyColor = true,
+            SolidColorOnly = false,
+        };
+
+        try
+        {
+            var c = (Color)ColorConverter.ConvertFromString(currentHex)!;
+            dlg.Color = System.Drawing.Color.FromArgb(c.A, c.R, c.G, c.B);
+        }
+        catch
+        {
+            // Start from the dialog default when the textbox has an invalid/partial value.
+        }
+
+        if (dlg.ShowDialog() != Forms.DialogResult.OK) return false;
+        pickedHex = $"#{dlg.Color.R:X2}{dlg.Color.G:X2}{dlg.Color.B:X2}";
+        return true;
+    }
+
+    private void TextColorPickButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (TryPickHexColor(TextColorBox.Text, out var hex)) TextColorBox.Text = hex;
+    }
+
+    private void PanelBgColorPickButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (TryPickHexColor(PanelBgColorBox.Text, out var hex)) PanelBgColorBox.Text = hex;
+    }
+
+    private void OutlineColorPickButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (TryPickHexColor(OutlineColorBox.Text, out var hex)) OutlineColorBox.Text = hex;
+    }
+
+    private void BgColorPickButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (TryPickHexColor(BgColorBox.Text, out var hex)) BgColorBox.Text = hex;
+    }
+
+    private void UpdatePositionModeUi()
+    {
+        var free = FreeformModeCheck.IsChecked == true;
+        AnchoredPositionPanel.Visibility = free ? Visibility.Collapsed : Visibility.Visible;
+        FreeformPositionPanel.Visibility = free ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// Refreshes strings that are set programmatically (not via DynamicResource XAML binding)
+    /// so they pick up the newly loaded language.
+    /// </summary>
+    private void RefreshCodeStrings()
+    {
+        var L = LanguageManager.Instance;
+        var s = App.Settings.Current;
+        LockButton.Content = s.OverlayLayout.Locked
+            ? L.GetString("Layout.UnlockOverlay")
+            : L.GetString("Layout.LockOverlay");
+        if (!App.Audio.IsRunning)
+        {
+            CaptureToggleButton.Content = L.GetString("Overview.StartCapture");
+            StatusText.Text = L.GetString("Overview.Format") == "Overview.Format" ? "Idle" : "Idle"; // stays as status
+        }
+        else
+        {
+            CaptureToggleButton.Content = L.GetString("Overview.StopCapture");
+        }
+    }
+
+    private void FreeformModeCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_binding)
+        {
+            UpdatePositionModeUi();
+            return;
+        }
+
+        App.Settings.Current.OverlayLayout.Mode = FreeformModeCheck.IsChecked == true
+            ? OverlayMode.Free
+            : OverlayMode.Anchored;
+        UpdatePositionModeUi();
+        Commit();
+    }
+
     private void AnchorBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_binding) return;
@@ -546,6 +644,15 @@ public partial class MainWindow : Window
         SourceLangBox.ItemsSource = _sourceLangs;
         TargetLangBox.ItemsSource = _targetLangs;
         RebuildLanguageLists();
+        
+        // Initialize application language picker
+        var langMgr = LanguageManager.Instance;
+        var availableLangs = langMgr.GetAvailableLanguages();
+        LanguageBox.ItemsSource = availableLangs;
+        if (availableLangs.Count > 0)
+        {
+            LanguageBox.SelectedItem = App.Settings.Current.UILanguage;
+        }
     }
 
     private void TriggerLanguageRefresh()
@@ -701,6 +808,25 @@ public partial class MainWindow : Window
         Commit();
     }
 
+    private void LanguageBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_binding) return;
+        if (LanguageBox.SelectedItem is string langCode)
+        {
+            App.Settings.Current.UILanguage = langCode;
+            Commit();
+
+            // Live-switch: reload strings and push into Application.Resources.
+            // DynamicResource bindings in XAML update automatically.
+            var langMgr = LanguageManager.Instance;
+            langMgr.SetLanguage(langCode);
+            langMgr.ApplyToResources();
+
+            // Refresh any programmatically-set strings that don't use DynamicResource
+            RefreshCodeStrings();
+        }
+    }
+
     // --- translation output ---
 
     private void CaptionsEnabledCheck_Changed(object sender, RoutedEventArgs e)
@@ -797,7 +923,10 @@ public partial class MainWindow : Window
         var s = App.Settings.Current;
         s.OverlayLayout.Locked = !s.OverlayLayout.Locked;
         App.Settings.Save(s);
-        LockButton.Content = s.OverlayLayout.Locked ? "Unlock overlay" : "Lock overlay (click-through)";
+        var L = LanguageManager.Instance;
+        LockButton.Content = s.OverlayLayout.Locked
+            ? L.GetString("Layout.UnlockOverlay")
+            : L.GetString("Layout.LockOverlay");
     }
 
     private void ObsCaptureModeCheck_Changed(object sender, RoutedEventArgs e)
@@ -875,12 +1004,12 @@ public partial class MainWindow : Window
                 StatusText.Text = fmt is null
                     ? "Starting…"
                     : $"{fmt.SampleRate} Hz · {fmt.Channels} ch · {fmt.BitsPerSample}-bit {fmt.Encoding}";
-                CaptureToggleButton.Content = "Stop capture";
+                CaptureToggleButton.Content = LanguageManager.Instance.GetString("Overview.StopCapture");
             }
             else
             {
                 StatusText.Text = "Idle";
-                CaptureToggleButton.Content = "Start capture";
+                CaptureToggleButton.Content = LanguageManager.Instance.GetString("Overview.StartCapture");
                 _smoothedLevel = 0;
                 VuBar.Width = 0;
             }

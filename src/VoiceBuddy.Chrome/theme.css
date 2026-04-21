@@ -1,0 +1,184 @@
+/* Shared DeepL palette + base reset for popup and options.
+   Dark is the default; @media prefers-color-scheme: light overrides.
+   color-scheme is also set so native form controls render correctly. */
+
+:root {
+  color-scheme: dark;
+
+  --brand-navy: #0f2b46;
+  --brand-blue: #0f7fe4;
+  --brand-blue-hover: #3895ee;
+  --danger: #d14c4c;
+  --danger-hover: #e06060;
+
+  --bg: #0a1626;
+  --surface: #112844;
+  --surface-2: #183252;
+  --border: #1f3a5c;
+  --text: #e6ecf3;
+  --text-muted: #8fa3bc;
+  --text-faint: #6a809a;
+  --accent: var(--brand-blue);
+  --accent-hover: var(--brand-blue-hover);
+  --accent-fg: #ffffff;
+  --logo-badge-bg: #ffffff;
+  --focus-ring: color-mix(in srgb, var(--brand-blue) 60%, transparent);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --bg: #ffffff;
+    --surface: #f5f7fa;
+    --surface-2: #e8ecf2;
+    --border: #d7dee5;
+    --text: var(--brand-navy);
+    --text-muted: #5c7388;
+    --text-faint: #8fa3bc;
+    --accent: var(--brand-blue);
+    --accent-hover: var(--brand-blue-hover);
+    --accent-fg: #ffffff;
+    --logo-badge-bg: var(--brand-navy);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-badge {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 7px;
+  background: var(--logo-badge-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-navy) 40%, transparent);
+}
+@media (prefers-color-scheme: light) {
+  .logo-badge { box-shadow: none; }
+}
+
+.logo-badge img {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+/* In light mode the badge itself is navy, so the navy logo would vanish —
+   swap to a white silhouette. */
+@media (prefers-color-scheme: light) {
+  .logo-badge img { filter: brightness(0) invert(1); }
+}
+
+.brand-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin: 0;
+  color: var(--text);
+}
+.brand-title .brand-accent { color: var(--brand-blue); }
+
+select,
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+select:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+input[type="checkbox"],
+input[type="range"] { accent-color: var(--accent); }
+
+button.primary {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .12s ease, transform .05s ease;
+}
+button.primary:hover { background: var(--accent-hover); }
+button.primary:active { transform: translateY(1px); }
+button.primary.stop { background: var(--danger); }
+button.primary.stop:hover { background: var(--danger-hover); }
+
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 12px 0 5px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+.check.sub {
+  margin-left: 24px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.check.hidden { display: none; }
+.check input { margin: 0; }
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 14px 0 0;
+}
+
+.status {
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  min-height: 14px;
+  word-wrap: break-word;
+}

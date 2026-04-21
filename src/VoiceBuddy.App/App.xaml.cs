@@ -23,6 +23,12 @@ public partial class App : Application
         base.OnStartup(e);
 
         Settings = new SettingsStore();
+        
+        // Initialize language from settings
+        var langMgr = LanguageManager.Instance;
+        langMgr.SetLanguage(Settings.Current.UILanguage);
+        langMgr.ApplyToResources();
+
         Subtitles = new SubtitleBus();
         FakeFeed = new FakeSubtitleFeed();
         Debug = new DebugLog();
