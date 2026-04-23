@@ -135,11 +135,16 @@ jobs:
             https://apps.0install.net/0install/0template.xml `
             $tpl version=$v released=$today stability=stable
           if ($LASTEXITCODE -ne 0) { throw "0template failed" }
-          $generated = "voice-buddy-$v.xml"
-          if (-not (Test-Path $generated)) {
-            throw "0template did not produce $generated"
+          # 0template writes the generated feed next to the template, not in
+          # the working directory. Move it to the workspace root so downstream
+          # steps (and the release-asset upload) find it at a stable path.
+          $from = "packaging\0install\voice-buddy-$v.xml"
+          $to   = "voice-buddy-$v.xml"
+          if (-not (Test-Path $from)) {
+            throw "0template did not produce $from"
           }
-          Write-Host "Generated $generated"
+          Move-Item -Force $from $to
+          Write-Host "Generated $to"
 
       - name: Prepare 0repo state (first run only)
         shell: pwsh
