@@ -126,11 +126,15 @@ jobs:
         run: |
           $v = "${{ steps.version.outputs.version }}"
           $tpl = "packaging\0install\voice-buddy.xml.template"
-          # 0template downloads the archive, computes the manifest-digest,
-          # and substitutes {version}/{released}/{stability}.
+          $today = Get-Date -Format "yyyy-MM-dd"
+          # 0template requires every {placeholder} in the template to have a
+          # value supplied on the command line (it does not auto-fill any).
+          # After substitution it downloads the archive referenced by <archive
+          # href="…"> and computes the manifest-digest.
           0install run --batch `
             https://apps.0install.net/0install/0template.xml `
-            $tpl version=$v
+            $tpl version=$v released=$today stability=stable
+          if ($LASTEXITCODE -ne 0) { throw "0template failed" }
           $generated = "voice-buddy-$v.xml"
           if (-not (Test-Path $generated)) {
             throw "0template did not produce $generated"
