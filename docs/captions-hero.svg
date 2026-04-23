@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-label="Caption preview next to a control panel with font, size, color, background opacity, anchor, max lines, and click-through settings">
+  <defs>
+    <linearGradient id="stage" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e2b50"/>
+      <stop offset="1" stop-color="#0a1122"/>
+    </linearGradient>
+    <linearGradient id="video" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#27365f"/>
+      <stop offset="1" stop-color="#0d1732"/>
+    </linearGradient>
+    <linearGradient id="fill" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6ea7ff"/>
+      <stop offset="1" stop-color="#1ddec1"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f1729"/>
+      <stop offset="1" stop-color="#0b1322"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ambient -->
+  <rect width="1200" height="620" fill="#0b1220"/>
+  <ellipse cx="1040" cy="90" rx="420" ry="230" fill="rgba(15,130,255,0.18)"/>
+  <ellipse cx="140" cy="540" rx="360" ry="200" fill="rgba(29,222,193,0.10)"/>
+
+  <!-- ================= LEFT: PREVIEW ================= -->
+  <g transform="translate(60, 60)">
+    <rect width="680" height="500" rx="16" fill="url(#stage)" stroke="#1f2a44" stroke-width="1.5"/>
+
+    <!-- LIVE badge -->
+    <g transform="translate(24, 24)">
+      <rect width="70" height="24" rx="12" fill="rgba(255,95,87,0.14)" stroke="rgba(255,95,87,0.45)"/>
+      <circle cx="14" cy="12" r="4" fill="#ff5f57"/>
+      <text x="24" y="16" fill="#ff9090" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="1.4">LIVE</text>
+    </g>
+
+    <!-- DE → EN badge -->
+    <g transform="translate(580, 24)">
+      <rect width="76" height="24" rx="12" fill="rgba(15,130,255,0.15)" stroke="rgba(15,130,255,0.45)"/>
+      <text x="38" y="16" text-anchor="middle" fill="#9bc7ff" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="1.4">DE → EN</text>
+    </g>
+
+    <!-- Video thumb -->
+    <rect x="40" y="68" width="600" height="280" rx="10" fill="url(#video)"/>
+    <!-- play button -->
+    <circle cx="340" cy="208" r="42" fill="rgba(255,255,255,0.06)" stroke="rgba(155,199,255,0.45)" stroke-width="2"/>
+    <polygon points="330,190 330,226 360,208" fill="#cadcfb"/>
+    <!-- progress -->
+    <rect x="60" y="316" width="560" height="4" rx="2" fill="rgba(255,255,255,0.08)"/>
+    <rect x="60" y="316" width="300" height="4" rx="2" fill="url(#fill)"/>
+    <circle cx="360" cy="318" r="5" fill="#fff"/>
+    <text x="60" y="338" fill="#8897b2" font-family="Inter,sans-serif" font-size="10" font-weight="500">12:34</text>
+    <text x="620" y="338" text-anchor="end" fill="#8897b2" font-family="Inter,sans-serif" font-size="10" font-weight="500">-18:22</text>
+
+    <!-- Caption overlay -->
+    <g transform="translate(60, 376)">
+      <rect width="560" height="98" rx="12" fill="rgba(0,0,0,0.78)" stroke="rgba(255,255,255,0.06)"/>
+      <text x="280" y="40" text-anchor="middle" fill="#ffffff" font-family="Inter,sans-serif" font-size="19" font-weight="500">Welcome back to the stream, everyone.</text>
+      <text x="280" y="74" text-anchor="middle" fill="#ffffff" font-family="Inter,sans-serif" font-size="19" font-weight="500">Thanks for tuning in tonight.</text>
+    </g>
+  </g>
+
+  <!-- ================= RIGHT: CONTROL PANEL ================= -->
+  <g transform="translate(780, 60)">
+    <rect width="360" height="500" rx="16" fill="url(#panel)" stroke="#1f2a44" stroke-width="1.5"/>
+
+    <text x="28" y="44" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="16" font-weight="700" letter-spacing="-0.01em">Caption style</text>
+    <text x="28" y="64" fill="#8897b2" font-family="Inter,sans-serif" font-size="12" font-weight="500">Tune every detail</text>
+    <line x1="28" y1="84" x2="332" y2="84" stroke="#1f2a44"/>
+
+    <!-- FONT -->
+    <g transform="translate(28, 104)">
+      <text fill="#8897b2" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="1.6">FONT</text>
+      <rect x="0" y="12" width="304" height="34" rx="8" fill="rgba(255,255,255,0.04)" stroke="#1f2a44"/>
+      <text x="14" y="34" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="13" font-weight="500">Inter Medium</text>
+      <path d="M282,24 l6,6 l6,-6" stroke="#8897b2" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- SIZE -->
+    <g transform="translate(28, 166)">
+      <text fill="#8897b2" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="1.6">SIZE</text>
+      <text x="304" y="0" text-anchor="end" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="11" font-weight="600">28 pt</text>
+      <rect x="0" y="16" width="304" height="6" rx="3" fill="#1f2a44"/>
+      <rect x="0" y="16" width="176" height="6" rx="3" fill="url(#fill)"/>
+      <circle cx="176" cy="19" r="10" fill="#ffffff" stroke="#0f82ff" stroke-width="2"/>
+    </g>
+
+    <!-- COLOR -->
+    <g transform="translate(28, 216)">
+      <text fill="#8897b2" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="1.6">TEXT COLOR</text>
+      <g transform="translate(0, 16)">
+        <circle cx="14" cy="14" r="14" fill="#ffffff" stroke="#0f82ff" stroke-width="2"/>
+        <circle cx="52" cy="14" r="14" fill="#ffd84d"/>
+        <circle cx="90" cy="14" r="14" fill="#1ddec1"/>
+        <circle cx="128" cy="14" r="14" fill="#c6a6ff"/>
+        <circle cx="166" cy="14" r="14" fill="#ff9090"/>
+        <rect x="190" y="0" width="28" height="28" rx="14" fill="rgba(255,255,255,0.04)" stroke="#1f2a44" stroke-dasharray="3 3"/>
+        <text x="204" y="19" text-anchor="middle" fill="#8897b2" font-family="Inter,sans-serif" font-size="16" font-weight="600">+</text>
+      </g>
+    </g>
+
+    <!-- OPACITY -->
+    <g transform="translate(28, 278)">
+      <text fill="#8897b2" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="1.6">BG OPACITY</text>
+      <text x="304" y="0" text-anchor="end" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="11" font-weight="600">78%</text>
+      <rect x="0" y="16" width="304" height="6" rx="3" fill="#1f2a44"/>
+      <rect x="0" y="16" width="237" height="6" rx="3" fill="url(#fill)"/>
+      <circle cx="237" cy="19" r="10" fill="#ffffff" stroke="#0f82ff" stroke-width="2"/>
+    </g>
+
+    <!-- ANCHOR + MAX LINES -->
+    <g transform="translate(28, 328)">
+      <text fill="#8897b2" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="1.6">ANCHOR</text>
+      <g transform="translate(0, 16)">
+        <rect x="0"  y="0"  width="20" height="20" rx="3" fill="rgba(255,255,255,0.05)"/>
+        <rect x="26" y="0"  width="20" height="20" rx="3" fill="rgba(255,255,255,0.05)"/>
+        <rect x="52" y="0"  width="20" height="20" rx="3" fill="rgba(255,255,255,0.05)"/>
+        <rect x="0"  y="26" width="20" height="20" rx="3" fill="rgba(255,255,255,0.05)"/>
+        <rect x="26" y="26" width="20" height="20" rx="3" fill="rgba(255,255,255,0.05)"/>
+        <rect x="52" y="26" width="20" height="20" rx="3" fill="rgba(255,255,255,0.05)"/>
+        <rect x="0"  y="52" width="20" height="20" rx="3" fill="rgba(255,255,255,0.05)"/>
+        <rect x="26" y="52" width="20" height="20" rx="3" fill="#0f82ff"/>
+        <rect x="52" y="52" width="20" height="20" rx="3" fill="rgba(255,255,255,0.05)"/>
+      </g>
+    </g>
+
+    <g transform="translate(160, 328)">
+      <text fill="#8897b2" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="1.6">MAX LINES</text>
+      <g transform="translate(0, 16)">
+        <rect x="0"   y="0"  width="40" height="28" rx="6" fill="rgba(255,255,255,0.04)" stroke="#1f2a44"/>
+        <text x="20"  y="19" text-anchor="middle" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="13" font-weight="600">1</text>
+        <rect x="48"  y="0"  width="40" height="28" rx="6" fill="rgba(15,130,255,0.20)" stroke="rgba(15,130,255,0.55)"/>
+        <text x="68"  y="19" text-anchor="middle" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="13" font-weight="600">2</text>
+        <rect x="96"  y="0"  width="40" height="28" rx="6" fill="rgba(255,255,255,0.04)" stroke="#1f2a44"/>
+        <text x="116" y="19" text-anchor="middle" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="13" font-weight="600">3</text>
+      </g>
+    </g>
+
+    <!-- TOGGLES -->
+    <g transform="translate(28, 432)">
+      <text y="4" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="13" font-weight="500">Click-through</text>
+      <g transform="translate(260, -12)">
+        <rect width="44" height="24" rx="12" fill="#0f82ff"/>
+        <circle cx="32" cy="12" r="9" fill="#ffffff"/>
+      </g>
+    </g>
+    <g transform="translate(28, 466)">
+      <text y="4" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="13" font-weight="500">Always on top</text>
+      <g transform="translate(260, -12)">
+        <rect width="44" height="24" rx="12" fill="#0f82ff"/>
+        <circle cx="32" cy="12" r="9" fill="#ffffff"/>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 240" role="img" aria-label="Four caption style presets: Minimal, Broadcast, Neon, and Paper">
+  <defs>
+    <filter id="neonGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="stg1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2544"/>
+      <stop offset="1" stop-color="#0b1220"/>
+    </linearGradient>
+    <linearGradient id="stg2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f1f1f"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="stg3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0c1a2e"/>
+      <stop offset="1" stop-color="#03080f"/>
+    </linearGradient>
+    <linearGradient id="stg4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbf6e9"/>
+      <stop offset="1" stop-color="#e4dcc4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Card 1: Minimal -->
+  <g transform="translate(30, 20)">
+    <rect width="260" height="200" rx="14" fill="#0f1729" stroke="#1f2a44"/>
+    <text x="20" y="34" fill="#8ea2c3" font-family="Inter,sans-serif" font-size="11" font-weight="700" letter-spacing="1.4">MINIMAL</text>
+    <rect x="20" y="54" width="220" height="126" rx="8" fill="url(#stg1)"/>
+    <rect x="40" y="128" width="180" height="38" rx="6" fill="rgba(0,0,0,0.55)"/>
+    <text x="130" y="153" text-anchor="middle" fill="#ffffff" font-family="Inter,sans-serif" font-size="13" font-weight="500">Welcome everyone.</text>
+  </g>
+
+  <!-- Card 2: Broadcast -->
+  <g transform="translate(320, 20)">
+    <rect width="260" height="200" rx="14" fill="#0f1729" stroke="#1f2a44"/>
+    <text x="20" y="34" fill="#8ea2c3" font-family="Inter,sans-serif" font-size="11" font-weight="700" letter-spacing="1.4">BROADCAST</text>
+    <rect x="20" y="54" width="220" height="126" rx="8" fill="url(#stg2)"/>
+    <rect x="30" y="126" width="200" height="42" rx="2" fill="#000000"/>
+    <text x="130" y="155" text-anchor="middle" fill="#ffd84d" font-family="Inter,sans-serif" font-size="15" font-weight="700">WELCOME EVERYONE.</text>
+  </g>
+
+  <!-- Card 3: Neon -->
+  <g transform="translate(610, 20)">
+    <rect width="260" height="200" rx="14" fill="#0f1729" stroke="#1f2a44"/>
+    <text x="20" y="34" fill="#8ea2c3" font-family="Inter,sans-serif" font-size="11" font-weight="700" letter-spacing="1.4">NEON</text>
+    <rect x="20" y="54" width="220" height="126" rx="8" fill="url(#stg3)"/>
+    <text x="130" y="152" text-anchor="middle" fill="#1ddec1" font-family="Inter,sans-serif" font-size="15" font-weight="700" filter="url(#neonGlow)">Welcome everyone.</text>
+  </g>
+
+  <!-- Card 4: Paper -->
+  <g transform="translate(900, 20)">
+    <rect width="260" height="200" rx="14" fill="#0f1729" stroke="#1f2a44"/>
+    <text x="20" y="34" fill="#8ea2c3" font-family="Inter,sans-serif" font-size="11" font-weight="700" letter-spacing="1.4">PAPER</text>
+    <rect x="20" y="54" width="220" height="126" rx="8" fill="url(#stg4)"/>
+    <text x="130" y="153" text-anchor="middle" fill="#1a1915" font-family="Georgia,serif" font-size="15" font-weight="600" font-style="italic">Welcome everyone.</text>
+  </g>
+</svg>

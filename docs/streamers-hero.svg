@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" role="img" aria-label="Live stream with translated captions on screen for viewers, and SRT subtitle files saved per language">
+  <defs>
+    <linearGradient id="streamBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#213769"/>
+      <stop offset="1" stop-color="#0a1225"/>
+    </linearGradient>
+    <linearGradient id="gameArt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5b3da6"/>
+      <stop offset="0.6" stop-color="#0f82ff"/>
+      <stop offset="1" stop-color="#1ddec1"/>
+    </linearGradient>
+    <linearGradient id="panelBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f1729"/>
+      <stop offset="1" stop-color="#0b1322"/>
+    </linearGradient>
+    <linearGradient id="filePrimary" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f82ff"/>
+      <stop offset="1" stop-color="#2aa0ff"/>
+    </linearGradient>
+    <linearGradient id="fileTeal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1ddec1"/>
+      <stop offset="1" stop-color="#4fe9d1"/>
+    </linearGradient>
+    <linearGradient id="fileViolet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c6a6ff"/>
+      <stop offset="1" stop-color="#a67eff"/>
+    </linearGradient>
+    <linearGradient id="fileAmber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd84d"/>
+      <stop offset="1" stop-color="#ffae3e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ambient -->
+  <rect width="1200" height="460" fill="#0b1220"/>
+  <ellipse cx="1050" cy="100" rx="440" ry="240" fill="rgba(15,130,255,0.18)"/>
+  <ellipse cx="140" cy="420" rx="360" ry="200" fill="rgba(198,166,255,0.10)"/>
+
+  <!-- ================= LEFT: STREAM PREVIEW ================= -->
+  <g transform="translate(60, 40)">
+    <rect width="660" height="380" rx="16" fill="#0f1729" stroke="#1f2a44" stroke-width="1.5"/>
+
+    <!-- titlebar -->
+    <rect width="660" height="40" rx="16" fill="#111a2e"/>
+    <rect y="24" width="660" height="16" fill="#111a2e"/>
+    <circle cx="22" cy="20" r="5" fill="#ff5f57"/>
+    <circle cx="40" cy="20" r="5" fill="#febc2e"/>
+    <circle cx="58" cy="20" r="5" fill="#28c840"/>
+    <text x="330" y="24" text-anchor="middle" fill="#8897b2" font-family="Inter,sans-serif" font-size="12" font-weight="500">Your Stream</text>
+
+    <!-- live badge -->
+    <g transform="translate(548, 10)">
+      <rect width="96" height="24" rx="12" fill="rgba(255,95,87,0.16)" stroke="rgba(255,95,87,0.5)"/>
+      <circle cx="14" cy="12" r="4" fill="#ff5f57"/>
+      <text x="30" y="16" fill="#ff9090" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="1.4">LIVE · 2.4k</text>
+    </g>
+
+    <!-- Scene area -->
+    <rect x="16" y="56" width="628" height="308" rx="10" fill="url(#streamBg)"/>
+
+    <!-- abstract "game" art -->
+    <rect x="32" y="72" width="596" height="236" rx="8" fill="url(#gameArt)" opacity="0.9"/>
+    <!-- subtle highlight shapes -->
+    <circle cx="180" cy="160" r="58" fill="rgba(255,255,255,0.10)"/>
+    <circle cx="440" cy="210" r="82" fill="rgba(255,255,255,0.08)"/>
+    <path d="M 60 280 Q 200 200 340 260 T 620 240" stroke="rgba(255,255,255,0.22)" stroke-width="2" fill="none"/>
+
+    <!-- webcam bubble (bottom-right) -->
+    <g transform="translate(524, 200)">
+      <circle r="54" fill="#0f1729" stroke="#1ddec1" stroke-width="2"/>
+      <!-- stylised head -->
+      <circle cy="-10" r="16" fill="#e6c9a8"/>
+      <path d="M -26 28 Q 0 4 26 28 L 26 40 L -26 40 Z" fill="#1ddec1"/>
+    </g>
+
+    <!-- caption bar at bottom of scene -->
+    <g transform="translate(56, 320)">
+      <rect width="548" height="36" rx="8" fill="rgba(0,0,0,0.78)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="274" y="24" text-anchor="middle" fill="#ffffff" font-family="Inter,sans-serif" font-size="14" font-weight="500">Thanks for the sub, everyone! Let's jump in.</text>
+    </g>
+  </g>
+
+  <!-- ================= RIGHT: SRT FILE PANEL ================= -->
+  <g transform="translate(760, 40)">
+    <rect width="380" height="380" rx="16" fill="url(#panelBg)" stroke="#1f2a44" stroke-width="1.5"/>
+
+    <text x="28" y="40" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="15" font-weight="700">Auto-saved subtitles</text>
+    <text x="28" y="60" fill="#8897b2" font-family="Inter,sans-serif" font-size="12" font-weight="500">One SRT file per language, as you record.</text>
+    <line x1="28" y1="78" x2="352" y2="78" stroke="#1f2a44"/>
+
+    <!-- File 1: EN -->
+    <g transform="translate(28, 96)">
+      <rect width="324" height="56" rx="10" fill="rgba(255,255,255,0.03)" stroke="#1f2a44"/>
+      <g transform="translate(14, 10)">
+        <rect width="36" height="36" rx="7" fill="url(#filePrimary)"/>
+        <text x="18" y="23" text-anchor="middle" fill="#ffffff" font-family="Inter,sans-serif" font-size="10" font-weight="700">EN</text>
+      </g>
+      <text x="62" y="24" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="13" font-weight="600">Stream-2026-04-23-EN.srt</text>
+      <text x="62" y="40" fill="#8897b2" font-family="Inter,sans-serif" font-size="11" font-weight="500">432 cues · 1h 14m</text>
+      <text x="310" y="36" text-anchor="end" fill="#1ddec1" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="0.8">LIVE</text>
+    </g>
+
+    <!-- File 2: DE -->
+    <g transform="translate(28, 168)">
+      <rect width="324" height="56" rx="10" fill="rgba(255,255,255,0.03)" stroke="#1f2a44"/>
+      <g transform="translate(14, 10)">
+        <rect width="36" height="36" rx="7" fill="url(#fileTeal)"/>
+        <text x="18" y="23" text-anchor="middle" fill="#0b1220" font-family="Inter,sans-serif" font-size="10" font-weight="700">DE</text>
+      </g>
+      <text x="62" y="24" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="13" font-weight="600">Stream-2026-04-23-DE.srt</text>
+      <text x="62" y="40" fill="#8897b2" font-family="Inter,sans-serif" font-size="11" font-weight="500">429 cues · 1h 14m</text>
+      <text x="310" y="36" text-anchor="end" fill="#1ddec1" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="0.8">LIVE</text>
+    </g>
+
+    <!-- File 3: ES -->
+    <g transform="translate(28, 240)">
+      <rect width="324" height="56" rx="10" fill="rgba(255,255,255,0.03)" stroke="#1f2a44"/>
+      <g transform="translate(14, 10)">
+        <rect width="36" height="36" rx="7" fill="url(#fileViolet)"/>
+        <text x="18" y="23" text-anchor="middle" fill="#0b1220" font-family="Inter,sans-serif" font-size="10" font-weight="700">ES</text>
+      </g>
+      <text x="62" y="24" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="13" font-weight="600">Stream-2026-04-23-ES.srt</text>
+      <text x="62" y="40" fill="#8897b2" font-family="Inter,sans-serif" font-size="11" font-weight="500">418 cues · 1h 14m</text>
+      <text x="310" y="36" text-anchor="end" fill="#1ddec1" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="0.8">LIVE</text>
+    </g>
+
+    <!-- File 4: JA -->
+    <g transform="translate(28, 312)">
+      <rect width="324" height="56" rx="10" fill="rgba(255,255,255,0.03)" stroke="#1f2a44"/>
+      <g transform="translate(14, 10)">
+        <rect width="36" height="36" rx="7" fill="url(#fileAmber)"/>
+        <text x="18" y="23" text-anchor="middle" fill="#0b1220" font-family="Inter,sans-serif" font-size="10" font-weight="700">JA</text>
+      </g>
+      <text x="62" y="24" fill="#e6ecf5" font-family="Inter,sans-serif" font-size="13" font-weight="600">Stream-2026-04-23-JA.srt</text>
+      <text x="62" y="40" fill="#8897b2" font-family="Inter,sans-serif" font-size="11" font-weight="500">401 cues · 1h 14m</text>
+      <text x="310" y="36" text-anchor="end" fill="#1ddec1" font-family="Inter,sans-serif" font-size="10" font-weight="700" letter-spacing="0.8">LIVE</text>
+    </g>
+  </g>
+</svg>
