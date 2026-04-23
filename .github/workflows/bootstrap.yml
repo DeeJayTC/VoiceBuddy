@@ -29,9 +29,11 @@ jobs:
         run: |
           choco install 0install -y --no-progress
           if ($LASTEXITCODE -ne 0) { throw "choco install 0install failed" }
-          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
-          refreshenv
-          0install --version
+          # See release.yml — re-expose 0install on PATH for subsequent steps.
+          $exe = Get-ChildItem -Path "C:\Program Files" -Filter "0install.exe" -Recurse -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+          if (-not $exe) { throw "0install.exe not found under C:\Program Files after choco install" }
+          "$($exe.DirectoryName)" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
       - name: Generate bootstrap EXE
         shell: pwsh

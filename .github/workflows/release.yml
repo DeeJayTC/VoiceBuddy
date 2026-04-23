@@ -81,15 +81,18 @@ jobs:
       - name: Install 0install (Windows)
         shell: pwsh
         run: |
-          # Chocolatey is preinstalled on windows-latest runners and puts
-          # 0install.exe on PATH. Much simpler than juggling a portable zip.
           choco install 0install -y --no-progress
           if ($LASTEXITCODE -ne 0) { throw "choco install 0install failed" }
-          # choco modifies the machine PATH. Refresh it for this session so the
-          # subsequent steps don't need to hardcode the install directory.
-          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
-          refreshenv
-          0install --version
+          # choco updates the machine PATH via registry, but GitHub Actions
+          # steps inherit env from the already-running runner process and do
+          # not re-read the registry. Locate 0install.exe explicitly and
+          # append its directory to GITHUB_PATH so the next step's fresh
+          # shell can find it.
+          $exe = Get-ChildItem -Path "C:\Program Files" -Filter "0install.exe" -Recurse -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+          if (-not $exe) { throw "0install.exe not found under C:\Program Files after choco install" }
+          Write-Host "Resolved 0install at $($exe.FullName)"
+          "$($exe.DirectoryName)" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
       - name: Import GPG signing key
         shell: pwsh
