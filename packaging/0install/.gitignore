@@ -1,0 +1,6 @@
+# 0repo runtime dirs — regenerated every release. Committed state lives under
+# repo/feeds/, repo/public/, repo/feed-keys/ (whitelisted below).
+repo/incoming/
+repo/archives/
+repo/*.bak
+repo/*.log

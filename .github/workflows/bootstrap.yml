@@ -1,0 +1,72 @@
+name: Generate 0install bootstrap installer
+
+# Produces VoiceBuddy-Setup.exe — a standalone installer that brings down 0install,
+# subscribes the user to the VoiceBuddy feed, and pins the app. Regenerate only
+# when the feed URI changes or you want to refresh the embedded 0install version.
+
+on:
+  workflow_dispatch:
+    inputs:
+      attach_to_release:
+        description: "Tag to upload the bootstrap EXE to (e.g. v0.2.0). Leave blank to only commit to docs/."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install 0install (Windows)
+        shell: pwsh
+        run: |
+          choco install 0install -y --no-progress
+          if ($LASTEXITCODE -ne 0) { throw "choco install 0install failed" }
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+          refreshenv
+          0install --version
+
+      - name: Generate bootstrap EXE
+        shell: pwsh
+        run: |
+          $out = "$env:GITHUB_WORKSPACE\VoiceBuddy-Setup.exe"
+          # 0install-win ships the "bootstrap" subcommand that stitches the GUI
+          # together with a subscribed feed URI into a self-contained EXE.
+          0install run --batch `
+            https://apps.0install.net/0install/0install-win.xml `
+            bootstrap --output="$out" `
+            https://deejaytc.github.io/VoiceBuddy/voice-buddy.xml
+          if ($LASTEXITCODE -ne 0) { throw "bootstrap generation failed" }
+          if (-not (Test-Path $out)) { throw "Bootstrap EXE missing at $out" }
+          Write-Host "Generated $out"
+
+      - name: Attach to existing release (optional)
+        if: ${{ inputs.attach_to_release != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.attach_to_release }}
+          files: VoiceBuddy-Setup.exe
+          fail_on_unmatched_files: true
+
+      - name: Commit bootstrap to docs/
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Copy-Item -Force VoiceBuddy-Setup.exe docs\VoiceBuddy-Setup.exe
+          git config user.name "voicebuddy-release-bot"
+          git config user.email "noreply@github.com"
+          git add docs/VoiceBuddy-Setup.exe
+          if (git diff --cached --quiet) {
+            Write-Host "Bootstrap unchanged; nothing to commit."
+            exit 0
+          }
+          git commit -m "chore: regenerate 0install bootstrap EXE"
+          git push origin HEAD:main

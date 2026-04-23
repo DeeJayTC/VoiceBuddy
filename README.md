@@ -40,12 +40,35 @@ the Free tier. Grab a key from [deepl.com/pro-api](https://www.deepl.com/pro-api
 
 ### Windows
 
-1. Download the latest `VoiceBuddy.exe` from the releases page and run it.
-2. Open the **Settings** tab and paste your DeepL API key.
-3. On the **Overview** tab, pick an audio source from the **Device** dropdown.
+Two install options:
+
+**Via 0install (recommended — auto-updates, smaller downloads):**
+
+1. Download `VoiceBuddy-Setup.exe` from the
+   [latest release](https://github.com/DeeJayTC/VoiceBuddy/releases/latest)
+   and run it. It installs [Zero Install](https://0install.net/) and subscribes
+   to the VoiceBuddy feed.
+2. If you already have 0install, skip the bootstrap and just run:
+   `0install run https://deejaytc.github.io/VoiceBuddy/voice-buddy.xml`
+
+0install pulls in the .NET 10 Desktop Runtime as a shared dependency, so
+app updates stay small and don't re-bundle the runtime each time.
+
+**Manual download:**
+
+1. Download the latest `voice-buddy-<version>-win-x64.zip` from the releases
+   page, unzip anywhere, and run `VoiceBuddy.exe`.
+   Requires the
+   [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
+   to be installed.
+
+Once running:
+
+1. Open the **Settings** tab and paste your DeepL API key.
+2. On the **Overview** tab, pick an audio source from the **Device** dropdown.
    Loopback devices (system audio) show a speaker icon, microphones show a
    mic icon.
-4. Click **Start capture** and play some audio through the selected source.
+3. Click **Start capture** and play some audio through the selected source.
    Captions appear in the overlay.
 
 Optional: check **Voice: stream translated audio** to also play the

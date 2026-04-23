@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<interface xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+  <name>VoiceBuddy</name>
+  <summary xml:lang="en">Real-time translated captions and voiceover, powered by DeepL Voice</summary>
+  <description xml:lang="en">
+DeepL Voice Buddy captures audio from any app, mic, or system source, streams it to the
+DeepL Voice Realtime API, and shows translated captions as an overlay. It can also play
+the translated voice back through any output device, including virtual audio cables for
+OBS, Discord, and Zoom.
+
+Requires a DeepL API Pro subscription.
+  </description>
+  <homepage>https://github.com/DeeJayTC/VoiceBuddy</homepage>
+  <icon href="https://deejaytc.github.io/VoiceBuddy/app-icon.png" type="image/png"/>
+  <icon href="https://deejaytc.github.io/VoiceBuddy/app-icon.ico" type="image/vnd.microsoft.icon"/>
+  <category>AudioVideo</category>
+
+  <feed-for interface="https://deejaytc.github.io/VoiceBuddy/voice-buddy.xml"/>
+
+  <group license="MIT">
+    <group>
+      <requires interface="https://apps.0install.net/dotnet/windowsdesktop-runtime.xml" version="10.0..!11.0"/>
+      <command name="run" path="VoiceBuddy.exe"/>
+
+      <implementation arch="Windows-x86_64" version="{version}" released="{released}" stability="{stability}">
+        <manifest-digest/>
+        <archive href="https://github.com/DeeJayTC/VoiceBuddy/releases/download/v{version}/voice-buddy-{version}-win-x64.zip"/>
+      </implementation>
+    </group>
+  </group>
+</interface>

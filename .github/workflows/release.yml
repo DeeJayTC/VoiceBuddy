@@ -1,0 +1,196 @@
+name: Release (Windows + 0install)
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version string (without leading v, e.g. 0.2.0). Only used for manual dispatch."
+        required: true
+        type: string
+
+permissions:
+  contents: write  # create release, push docs/voice-buddy.xml back to main
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -like "refs/tags/v*") {
+            $v = $env:GITHUB_REF.Substring("refs/tags/v".Length)
+          } else {
+            $v = "${{ inputs.version }}"
+          }
+          if (-not $v) { throw "Could not determine version." }
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "tag=v$v"    | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Releasing version $v"
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore + publish (framework-dependent, win-x64)
+        shell: pwsh
+        run: |
+          dotnet publish src/VoiceBuddy.App/VoiceBuddy.App.csproj `
+            -c Release `
+            -r win-x64 `
+            --no-self-contained `
+            -o publish
+          if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
+
+      - name: Stage zip contents
+        id: stage
+        shell: pwsh
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          $zipName = "voice-buddy-$v-win-x64.zip"
+          $zipPath = "$env:GITHUB_WORKSPACE\$zipName"
+          # Flat archive: VoiceBuddy.exe sits at the archive root so the feed's
+          # <command path="VoiceBuddy.exe"/> resolves without an extract= prefix.
+          Compress-Archive -Path "publish\*" -DestinationPath $zipPath -Force
+          "zip_path=$zipPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "zip_name=$zipName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Create GitHub Release with zip asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: VoiceBuddy ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: ${{ steps.stage.outputs.zip_path }}
+          fail_on_unmatched_files: true
+
+      - name: Install 0install (Windows)
+        shell: pwsh
+        run: |
+          # Chocolatey is preinstalled on windows-latest runners and puts
+          # 0install.exe on PATH. Much simpler than juggling a portable zip.
+          choco install 0install -y --no-progress
+          if ($LASTEXITCODE -ne 0) { throw "choco install 0install failed" }
+          # choco modifies the machine PATH. Refresh it for this session so the
+          # subsequent steps don't need to hardcode the install directory.
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+          refreshenv
+          0install --version
+
+      - name: Import GPG signing key
+        shell: pwsh
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          if (-not $env:GPG_PRIVATE_KEY) {
+            throw "Secret GPG_PRIVATE_KEY is not set. See packaging/0install/README.md."
+          }
+          $keyPath = "$env:RUNNER_TEMP\signing.key"
+          $env:GPG_PRIVATE_KEY | Out-File -FilePath $keyPath -Encoding ascii -NoNewline
+          # Configure loopback so gpg picks up the passphrase from env non-interactively.
+          $gpgConfDir = "$env:APPDATA\gnupg"
+          New-Item -ItemType Directory -Force -Path $gpgConfDir | Out-Null
+          "allow-loopback-pinentry" | Out-File -FilePath "$gpgConfDir\gpg-agent.conf" -Encoding ascii
+          "pinentry-mode loopback"  | Out-File -FilePath "$gpgConfDir\gpg.conf"       -Encoding ascii
+          gpg --batch --yes --import $keyPath
+          if ($LASTEXITCODE -ne 0) { throw "gpg import failed" }
+          Remove-Item $keyPath -Force
+
+          # Extract the primary key fingerprint so 0repo-config.py can read it.
+          $fp = (gpg --list-secret-keys --with-colons |
+            Select-String "^fpr" | Select-Object -First 1).Line.Split(':')[9]
+          if (-not $fp) { throw "Could not determine GPG fingerprint after import." }
+          "GPG_KEY_FP=$fp" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Imported key $fp"
+
+      - name: Generate versioned feed from template
+        shell: pwsh
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          $tpl = "packaging\0install\voice-buddy.xml.template"
+          # 0template downloads the archive, computes the manifest-digest,
+          # and substitutes {version}/{released}/{stability}.
+          0install run --batch `
+            https://apps.0install.net/0install/0template.xml `
+            $tpl version=$v
+          $generated = "voice-buddy-$v.xml"
+          if (-not (Test-Path $generated)) {
+            throw "0template did not produce $generated"
+          }
+          Write-Host "Generated $generated"
+
+      - name: Prepare 0repo state (first run only)
+        shell: pwsh
+        run: |
+          $repo = "packaging\0install\repo"
+          if (-not (Test-Path "$repo\0repo-config.py")) {
+            # `0repo create` requires the target dir to NOT exist.
+            if (Test-Path $repo) { Remove-Item -Recurse -Force $repo }
+            0install run --batch `
+              https://apps.0install.net/0install/0repo.xml `
+              create $repo "$env:GPG_KEY_FP"
+            if ($LASTEXITCODE -ne 0) { throw "0repo create failed" }
+            # Overlay our committed config on top of the generated skeleton so
+            # settings like REPOSITORY_BASE_URL match this repo.
+            Copy-Item -Force packaging\0install\0repo-config.py "$repo\0repo-config.py"
+          }
+
+      - name: Add implementation to feed via 0repo
+        shell: pwsh
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          $generated = "$env:GITHUB_WORKSPACE\voice-buddy-$v.xml"
+          Push-Location packaging\0install\repo
+          0install run --batch https://apps.0install.net/0install/0repo.xml add $generated
+          if ($LASTEXITCODE -ne 0) { throw "0repo add failed" }
+          Pop-Location
+
+      - name: Publish merged feed to docs/
+        shell: pwsh
+        run: |
+          $src = "packaging\0install\repo\public\voice-buddy.xml"
+          if (-not (Test-Path $src)) { throw "Merged feed missing at $src" }
+          Copy-Item -Force $src docs\voice-buddy.xml
+
+      - name: Upload versioned feed as release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          files: voice-buddy-${{ steps.version.outputs.version }}.xml
+
+      - name: Commit updated feed + 0repo state back to main
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "voicebuddy-release-bot"
+          git config user.email "noreply@github.com"
+          # Commit the merged public feed and the 0repo state (feeds/, public/,
+          # feed-keys/). Keeping the state in-repo is what lets the *next* release
+          # merge-on-top rather than overwriting history.
+          git add docs/voice-buddy.xml
+          git add packaging/0install/repo/feeds/
+          git add packaging/0install/repo/public/
+          git add packaging/0install/repo/feed-keys/
+          if (git diff --cached --quiet) {
+            Write-Host "No feed changes to commit."
+            exit 0
+          }
+          git commit -m "chore(release): publish voice-buddy.xml for v${{ steps.version.outputs.version }}"
+          # Tag pushes detach HEAD, so target main explicitly.
+          git push origin HEAD:main
