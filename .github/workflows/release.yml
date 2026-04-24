@@ -133,16 +133,25 @@ jobs:
           Write-Host "Imported key $fp"
 
           # Warm gpg-agent's passphrase cache by performing one throwaway
-          # signature with the passphrase supplied via --passphrase-fd. Any
-          # later gpg --sign within default-cache-ttl (24h) - including the
-          # ones 0repo shells out to - then completes without a prompt.
+          # signature. Write the passphrase to a temp file (no BOM, no
+          # trailing newline) and feed it via --passphrase-file: piping the
+          # env var into --passphrase-fd on Windows PowerShell appends CRLF,
+          # which gpg then treats as part of the passphrase and rejects as
+          # "Bad passphrase" even when the secret is correct.
+          $passFile = "$env:RUNNER_TEMP\pp.txt"
+          [System.IO.File]::WriteAllText($passFile, $env:GPG_PASSPHRASE.Trim())
+
           $warm    = "$env:RUNNER_TEMP\warmup.txt"
           $warmSig = "$env:RUNNER_TEMP\warmup.sig"
           "primer" | Out-File -FilePath $warm -Encoding ascii -NoNewline
-          $env:GPG_PASSPHRASE | gpg --batch --yes --pinentry-mode loopback `
-            --passphrase-fd 0 --local-user $fp `
-            --output $warmSig --detach-sign $warm
-          if ($LASTEXITCODE -ne 0) { throw "gpg-agent passphrase warmup failed" }
+
+          gpg --batch --yes --pinentry-mode loopback --passphrase-file $passFile `
+            --local-user $fp --output $warmSig --detach-sign $warm
+          $gpgExit = $LASTEXITCODE
+          Remove-Item $passFile -Force -ErrorAction SilentlyContinue
+          if ($gpgExit -ne 0) {
+            throw "gpg-agent passphrase warmup failed (is GPG_PASSPHRASE correct?)"
+          }
           Remove-Item $warm, $warmSig -Force -ErrorAction SilentlyContinue
 
       - name: Generate versioned feed from template
