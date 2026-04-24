@@ -185,6 +185,29 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           files: voice-buddy-${{ steps.version.outputs.version }}.xml
 
+      - name: Generate VoiceBuddy-Setup.exe via 0bootstrap
+        shell: pwsh
+        run: |
+          $out = "$env:GITHUB_WORKSPACE\VoiceBuddy-Setup.exe"
+          # 0bootstrap downloads the signed zero-install.exe template from
+          # get.0install.net and rewrites its embedded BootstrapConfig.ini so
+          # the EXE subscribes the end user to our feed on first run. Runs
+          # after the feed publish step so get.0install.net and our feed are
+          # both resolvable.
+          0install run --batch `
+            https://apps.0install.net/0install/0bootstrap.xml `
+            https://deejaytc.github.io/VoiceBuddy/voice-buddy.xml `
+            --output="$out"
+          if ($LASTEXITCODE -ne 0) { throw "0bootstrap failed" }
+          if (-not (Test-Path $out)) { throw "Bootstrap EXE missing at $out" }
+
+      - name: Upload bootstrap EXE as release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          files: VoiceBuddy-Setup.exe
+          fail_on_unmatched_files: true
+
       - name: Commit updated feed + 0repo state back to main
         shell: pwsh
         env:
