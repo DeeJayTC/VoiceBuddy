@@ -94,7 +94,7 @@ jobs:
           Write-Host "Resolved 0install at $($exe.FullName)"
           "$($exe.DirectoryName)" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
-      - name: Import GPG signing key
+      - name: Import GPG signing key and warm agent
         shell: pwsh
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -103,23 +103,47 @@ jobs:
           if (-not $env:GPG_PRIVATE_KEY) {
             throw "Secret GPG_PRIVATE_KEY is not set. See packaging/0install/README.md."
           }
-          $keyPath = "$env:RUNNER_TEMP\signing.key"
-          $env:GPG_PRIVATE_KEY | Out-File -FilePath $keyPath -Encoding ascii -NoNewline
-          # Configure loopback so gpg picks up the passphrase from env non-interactively.
+          if (-not $env:GPG_PASSPHRASE) {
+            throw "Secret GPG_PASSPHRASE is not set."
+          }
+
+          # gpg-agent config: allow loopback so we can feed the passphrase via
+          # --passphrase-fd, and cache the passphrase for a day so later
+          # signing calls (0repo add) don't re-prompt. Do NOT write a gpg.conf
+          # with `pinentry-mode loopback` - that option lives on the command
+          # line, not in gpg.conf, and older gnupg builds reject it there.
           $gpgConfDir = "$env:APPDATA\gnupg"
           New-Item -ItemType Directory -Force -Path $gpgConfDir | Out-Null
-          "allow-loopback-pinentry" | Out-File -FilePath "$gpgConfDir\gpg-agent.conf" -Encoding ascii
-          "pinentry-mode loopback"  | Out-File -FilePath "$gpgConfDir\gpg.conf"       -Encoding ascii
+          @(
+            "allow-loopback-pinentry",
+            "default-cache-ttl 86400",
+            "max-cache-ttl 86400"
+          ) | Out-File -FilePath "$gpgConfDir\gpg-agent.conf" -Encoding ascii
+
+          $keyPath = "$env:RUNNER_TEMP\signing.key"
+          $env:GPG_PRIVATE_KEY | Out-File -FilePath $keyPath -Encoding ascii -NoNewline
           gpg --batch --yes --import $keyPath
           if ($LASTEXITCODE -ne 0) { throw "gpg import failed" }
           Remove-Item $keyPath -Force
 
-          # Extract the primary key fingerprint so 0repo-config.py can read it.
           $fp = (gpg --list-secret-keys --with-colons |
             Select-String "^fpr" | Select-Object -First 1).Line.Split(':')[9]
           if (-not $fp) { throw "Could not determine GPG fingerprint after import." }
           "GPG_KEY_FP=$fp" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host "Imported key $fp"
+
+          # Warm gpg-agent's passphrase cache by performing one throwaway
+          # signature with the passphrase supplied via --passphrase-fd. Any
+          # later gpg --sign within default-cache-ttl (24h) - including the
+          # ones 0repo shells out to - then completes without a prompt.
+          $warm    = "$env:RUNNER_TEMP\warmup.txt"
+          $warmSig = "$env:RUNNER_TEMP\warmup.sig"
+          "primer" | Out-File -FilePath $warm -Encoding ascii -NoNewline
+          $env:GPG_PASSPHRASE | gpg --batch --yes --pinentry-mode loopback `
+            --passphrase-fd 0 --local-user $fp `
+            --output $warmSig --detach-sign $warm
+          if ($LASTEXITCODE -ne 0) { throw "gpg-agent passphrase warmup failed" }
+          Remove-Item $warm, $warmSig -Force -ErrorAction SilentlyContinue
 
       - name: Generate versioned feed from template
         shell: pwsh
@@ -146,6 +170,20 @@ jobs:
           Move-Item -Force $from $to
           Write-Host "Generated $to"
 
+      - name: Install 0repo via pip
+        shell: pwsh
+        run: |
+          # Install 0repo from upstream git rather than via `0install run ...`.
+          # The 0install-published 0repo feed pulls in its own bundled gnupg,
+          # which uses a private-key storage format that's not compatible with
+          # the system Gpg4win keyring the Import step wrote to. pip-installed
+          # 0repo shells out to whichever `gpg` is first on PATH (Gpg4win),
+          # so import and signing use the same keyring.
+          python -m pip install --upgrade pip
+          python -m pip install git+https://github.com/0install/0repo.git
+          if ($LASTEXITCODE -ne 0) { throw "0repo pip install failed" }
+          0repo --version
+
       - name: Prepare 0repo state (first run only)
         shell: pwsh
         run: |
@@ -153,9 +191,7 @@ jobs:
           if (-not (Test-Path "$repo\0repo-config.py")) {
             # `0repo create` requires the target dir to NOT exist.
             if (Test-Path $repo) { Remove-Item -Recurse -Force $repo }
-            0install run --batch `
-              https://apps.0install.net/0install/0repo.xml `
-              create $repo "$env:GPG_KEY_FP"
+            0repo create $repo "$env:GPG_KEY_FP"
             if ($LASTEXITCODE -ne 0) { throw "0repo create failed" }
             # Overlay our committed config on top of the generated skeleton so
             # settings like REPOSITORY_BASE_URL match this repo.
@@ -168,7 +204,7 @@ jobs:
           $v = "${{ steps.version.outputs.version }}"
           $generated = "$env:GITHUB_WORKSPACE\voice-buddy-$v.xml"
           Push-Location packaging\0install\repo
-          0install run --batch https://apps.0install.net/0install/0repo.xml add $generated
+          0repo add $generated
           if ($LASTEXITCODE -ne 0) { throw "0repo add failed" }
           Pop-Location
 
