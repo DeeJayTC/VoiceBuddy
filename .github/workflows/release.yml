@@ -179,19 +179,44 @@ jobs:
           Move-Item -Force $from $to
           Write-Host "Generated $to"
 
-      - name: Install 0repo via pip
+      - name: Install 0repo and zeroinstall from source
         shell: pwsh
         run: |
-          # Install 0repo from upstream git rather than via `0install run ...`.
-          # The 0install-published 0repo feed pulls in its own bundled gnupg,
-          # which uses a private-key storage format that's not compatible with
-          # the system Gpg4win keyring the Import step wrote to. pip-installed
-          # 0repo shells out to whichever `gpg` is first on PATH (Gpg4win),
-          # so import and signing use the same keyring.
+          # 0repo has no setup.py/pyproject.toml at the root, so plain
+          # `pip install git+...` fails. Its one runtime dep is the
+          # `zeroinstall` Python library, which isn't on PyPI but ships as
+          # a tarball with a real setup.py on the 0install repo releases.
+          # Install zeroinstall via pip, clone 0repo's sources, then drop
+          # a .cmd shim on PATH so downstream steps can keep calling
+          # `0repo ...` unchanged. This sidesteps `0install run 0repo.xml`
+          # entirely, so imports and signing go through one keyring
+          # (system Gpg4win).
+          $ziVer  = "2.3.17"
+          $ziRoot = "C:\zi"
+          New-Item -ItemType Directory -Force -Path $ziRoot | Out-Null
+
+          $tarball = "$ziRoot\zi.tar.bz2"
+          Invoke-WebRequest `
+            "https://github.com/0install/0install/releases/download/v$ziVer/0install-python-$ziVer.tar.bz2" `
+            -OutFile $tarball
+          tar -xjf $tarball -C $ziRoot
+          if ($LASTEXITCODE -ne 0) { throw "failed to extract zeroinstall tarball" }
+
+          git clone --depth 1 https://github.com/0install/0repo.git "$ziRoot\0repo"
+          if ($LASTEXITCODE -ne 0) { throw "git clone 0repo failed" }
+
           python -m pip install --upgrade pip
-          python -m pip install git+https://github.com/0install/0repo.git
-          if ($LASTEXITCODE -ne 0) { throw "0repo pip install failed" }
-          0repo --version
+          python -m pip install "$ziRoot\0install-python-$ziVer"
+          if ($LASTEXITCODE -ne 0) { throw "zeroinstall pip install failed" }
+
+          $binDir = "$ziRoot\bin"
+          New-Item -ItemType Directory -Force -Path $binDir | Out-Null
+          @(
+            '@echo off',
+            "python $ziRoot\0repo\0repo.py %*"
+          ) | Set-Content -Path "$binDir\0repo.cmd" -Encoding ascii
+          Add-Content $env:GITHUB_PATH $binDir
+          Write-Host "0repo shim written to $binDir\0repo.cmd"
 
       - name: Prepare 0repo state (first run only)
         shell: pwsh
