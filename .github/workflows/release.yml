@@ -205,9 +205,25 @@ jobs:
           git clone --depth 1 https://github.com/0install/0repo.git "$ziRoot\0repo"
           if ($LASTEXITCODE -ne 0) { throw "git clone 0repo failed" }
 
+          # Find whatever directory the tarball extracted into. The top-level
+          # name in the archive may not match the file stem, and `pip install
+          # C:\...` parses the drive-letter colon as a package spec, so we
+          # cd in and run `pip install .` instead.
+          $extracted = Get-ChildItem -Path $ziRoot -Directory |
+            Where-Object { $_.Name -ne "bin" -and $_.Name -ne "0repo" } |
+            Select-Object -First 1
+          if (-not $extracted) {
+            Get-ChildItem $ziRoot | Format-Table | Out-String | Write-Host
+            throw "zeroinstall tarball extracted no subdirectory"
+          }
+          Write-Host "zeroinstall library extracted to $($extracted.FullName)"
+
           python -m pip install --upgrade pip
-          python -m pip install "$ziRoot\0install-python-$ziVer"
-          if ($LASTEXITCODE -ne 0) { throw "zeroinstall pip install failed" }
+          Push-Location $extracted.FullName
+          python -m pip install .
+          $pipExit = $LASTEXITCODE
+          Pop-Location
+          if ($pipExit -ne 0) { throw "zeroinstall pip install failed" }
 
           $binDir = "$ziRoot\bin"
           New-Item -ItemType Directory -Force -Path $binDir | Out-Null
