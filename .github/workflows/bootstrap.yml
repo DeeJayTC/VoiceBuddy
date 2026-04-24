@@ -39,13 +39,15 @@ jobs:
         shell: pwsh
         run: |
           $out = "$env:GITHUB_WORKSPACE\VoiceBuddy-Setup.exe"
-          # 0install-win ships the "bootstrap" subcommand that stitches the GUI
-          # together with a subscribed feed URI into a self-contained EXE.
+          # 0bootstrap (0install/0bootstrap-dotnet on Windows) downloads the
+          # signed zero-install.exe template from get.0install.net and rewrites
+          # its embedded BootstrapConfig.ini to pin our feed URI. Feed URI is
+          # positional; --output sets the destination file.
           0install run --batch `
-            https://apps.0install.net/0install/0install-win.xml `
-            bootstrap --output="$out" `
-            https://deejaytc.github.io/VoiceBuddy/voice-buddy.xml
-          if ($LASTEXITCODE -ne 0) { throw "bootstrap generation failed" }
+            https://apps.0install.net/0install/0bootstrap.xml `
+            https://deejaytc.github.io/VoiceBuddy/voice-buddy.xml `
+            --output="$out"
+          if ($LASTEXITCODE -ne 0) { throw "0bootstrap failed" }
           if (-not (Test-Path $out)) { throw "Bootstrap EXE missing at $out" }
           Write-Host "Generated $out"
 
